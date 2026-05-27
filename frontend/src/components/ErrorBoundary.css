@@ -1,0 +1,60 @@
+.eb-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 48px 24px;
+  text-align: center;
+  min-height: 280px;
+}
+
+.eb-icon {
+  width: 48px; height: 48px;
+  color: #ef4444;
+  opacity: 0.8;
+}
+.eb-icon svg { width: 100%; height: 100%; }
+
+.eb-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text1, #f0f0f8);
+  letter-spacing: -0.3px;
+}
+
+.eb-desc {
+  font-size: 13px;
+  color: var(--text2, #a0a0bc);
+  font-family: var(--font-mono);
+  max-width: 340px;
+  line-height: 1.6;
+}
+
+.eb-code {
+  font-size: 11px;
+  color: #ef4444;
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-family: var(--font-mono);
+  max-width: 100%;
+  overflow-x: auto;
+  display: block;
+  text-align: left;
+}
+
+.eb-btn {
+  padding: 10px 28px;
+  background: var(--accent, #7b6cff);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  transition: opacity 0.15s;
+}
+.eb-btn:hover { opacity: 0.85; }

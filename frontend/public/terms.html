@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0a0a0f" />
+    <title>PDFKit Terms of Use</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0d1117;
+        --panel: #111827;
+        --border: rgba(148, 163, 184, 0.16);
+        --text: #f8fafc;
+        --muted: #cbd5e1;
+        --accent: #38bdf8;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at top right, rgba(34, 197, 94, 0.14), transparent 28%),
+          linear-gradient(180deg, #0b1020, var(--bg));
+        color: var(--text);
+        font-family: system-ui, sans-serif;
+        padding: 28px;
+      }
+
+      main {
+        width: min(860px, 100%);
+        margin: 0 auto;
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        background: rgba(17, 24, 39, 0.94);
+        padding: clamp(24px, 4vw, 42px);
+        box-shadow: 0 24px 60px rgba(2, 6, 23, 0.28);
+      }
+
+      .eyebrow {
+        display: inline-block;
+        color: var(--accent);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        margin-bottom: 14px;
+      }
+
+      h1 {
+        margin: 0 0 16px;
+        font-size: clamp(30px, 5vw, 50px);
+        line-height: 1;
+        letter-spacing: -0.06em;
+      }
+
+      h2 {
+        margin: 28px 0 10px;
+        font-size: 18px;
+        letter-spacing: -0.03em;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+        line-height: 1.75;
+        font-size: 15px;
+      }
+
+      ul {
+        padding-left: 20px;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      .home {
+        display: inline-block;
+        margin-top: 24px;
+        color: var(--text);
+        text-decoration: none;
+        border-bottom: 1px solid rgba(56, 189, 248, 0.4);
+        padding-bottom: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="eyebrow">PDFKit</div>
+      <h1>Terms of Use</h1>
+      <p>
+        PDFKit is provided as a practical PDF toolkit for merge, split, convert, sign, and compress workflows.
+        These terms are a starter draft and should be reviewed before public deployment.
+      </p>
+
+      <h2>Acceptable use</h2>
+      <ul>
+        <li>Use the app only for files and content you have the right to process.</li>
+        <li>Do not attempt to disrupt the service or misuse the backend.</li>
+        <li>Respect any local laws, workplace policies, or confidentiality obligations that apply to your files.</li>
+      </ul>
+
+      <h2>Service limitations</h2>
+      <ul>
+        <li>The app depends on backend document tools such as LibreOffice, Tesseract, and Poppler.</li>
+        <li>Availability may vary if those tools are missing or misconfigured on the host.</li>
+        <li>PDFKit is offered without any warranty; always verify important outputs before relying on them.</li>
+      </ul>
+
+      <h2>Changes</h2>
+      <p>
+        These terms may be updated as the product changes.
+      </p>
+
+      <a class="home" href="/">Back to PDFKit</a>
+    </main>
+  </body>
+</html>

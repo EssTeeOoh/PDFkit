@@ -1,0 +1,99 @@
+/* ── Toast notifications ──────────────────────────────────────────────────── */
+
+.toast-portal {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  max-width: 360px;
+  width: calc(100vw - 32px);
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  pointer-events: all;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+  font-family: var(--font-mono);
+}
+
+/* Types */
+.toast-success {
+  background: rgba(34,197,94,0.12);
+  border: 1px solid rgba(34,197,94,0.3);
+  color: #22c55e;
+}
+.toast-error {
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.3);
+  color: #ef4444;
+}
+.toast-info {
+  background: rgba(123,108,255,0.12);
+  border: 1px solid rgba(123,108,255,0.3);
+  color: var(--accent);
+}
+
+/* Animations */
+.toast-in {
+  animation: toast-slide-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.toast-out {
+  animation: toast-slide-out 0.25s ease forwards;
+}
+
+@keyframes toast-slide-in {
+  from { opacity: 0; transform: translateX(24px) scale(0.95); }
+  to   { opacity: 1; transform: translateX(0)    scale(1); }
+}
+@keyframes toast-slide-out {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(24px); }
+}
+
+.toast-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.toast-msg {
+  flex: 1;
+  color: var(--text1, #f0f0f8);
+}
+.toast-success .toast-msg { color: #22c55e; }
+.toast-error   .toast-msg { color: #ef4444; }
+.toast-info    .toast-msg { color: var(--accent); }
+
+.toast-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  color: currentColor;
+  opacity: 0.6;
+  padding: 0 2px;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+.toast-close:hover { opacity: 1; }
+
+/* Mobile: bottom clears the tab bar */
+@media (max-width: 768px) {
+  .toast-portal {
+    bottom: calc(72px + env(safe-area-inset-bottom) + 12px);
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-width: none;
+  }
+}

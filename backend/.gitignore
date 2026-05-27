@@ -1,0 +1,9 @@
+.venv/
+.env
+.env.local
+app/logs/
+app/**/__pycache__/
+app/**/*.pyc
+ocr_debug_output/
+ocr_debug2_output/
+*.pyc

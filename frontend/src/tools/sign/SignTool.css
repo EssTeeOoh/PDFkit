@@ -1,0 +1,771 @@
+.sign-tool {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+/* ── Step shell ─────────────────────────────────────────────────────────────── */
+.sign-step {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.step-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.step-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.page-badge {
+  background: rgba(123,108,255,0.12);
+  color: var(--accent);
+  border: 1px solid rgba(123,108,255,0.25);
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+}
+
+.items-badge {
+  background: rgba(34,197,94,0.1);
+  color: #22c55e;
+  border: 1px solid rgba(34,197,94,0.25);
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  margin-left: 8px;
+}
+
+/* ── Sections ───────────────────────────────────────────────────────────────── */
+.sign-section {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.section-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Form fields ────────────────────────────────────────────────────────────── */
+.fields-list { display: flex; flex-direction: column; gap: 12px; }
+
+.field-row { display: flex; flex-direction: column; gap: 6px; }
+
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text2);
+  font-family: var(--font-mono);
+}
+
+.field-name  { color: var(--text1); font-size: 13px; }
+
+.field-type-badge {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+.field-input {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--text1);
+  font-size: 13px;
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+}
+.field-input:focus { border-color: rgba(123,108,255,0.5); }
+
+.checkbox-wrap {
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer; font-size: 13px; color: var(--text2);
+}
+.checkbox-wrap input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+.radio-group { display: flex; flex-wrap: wrap; gap: 10px; }
+.radio-opt   { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text2); cursor: pointer; }
+.radio-opt input { accent-color: var(--accent); }
+
+/* ── Canvas toolbar ─────────────────────────────────────────────────────────── */
+.canvas-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.canvas-toolbar-left,
+.canvas-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.toolbar-btn:hover { border-color: var(--border2); color: var(--text1); }
+
+.toolbar-btn.accent {
+  border-color: rgba(123,108,255,0.4);
+  background: rgba(123,108,255,0.1);
+  color: var(--accent);
+}
+.toolbar-btn.accent:hover { background: rgba(123,108,255,0.18); border-color: rgba(123,108,255,0.6); }
+
+.toolbar-btn.ghost { background: transparent; }
+
+.toolbar-selection-actions {
+  display: flex;
+  gap: 6px;
+  padding-left: 8px;
+  border-left: 1px solid var(--border);
+  margin-left: 4px;
+}
+
+.toolbar-btn.dup {
+  border-color: rgba(123,108,255,0.4);
+  background: rgba(123,108,255,0.08);
+  color: var(--accent);
+}
+.toolbar-btn.dup:hover { background: rgba(123,108,255,0.18); }
+
+.toolbar-btn.del {
+  border-color: rgba(239,68,68,0.35);
+  background: rgba(239,68,68,0.07);
+  color: #ef4444;
+}
+.toolbar-btn.del:hover { background: rgba(239,68,68,0.15); }
+
+/* ── Page picker ────────────────────────────────────────────────────────────── */
+.page-picker { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.page-btn {
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.12s;
+  display: flex; align-items: center; justify-content: center;
+}
+.page-btn:hover     { border-color: var(--border2); color: var(--text1); }
+.page-btn.active    { border-color: rgba(123,108,255,0.5); background: rgba(123,108,255,0.12); color: var(--accent); }
+.page-btn.has-items { box-shadow: 0 0 0 2px rgba(34,197,94,0.35); }
+
+/* ── Canvas hint ────────────────────────────────────────────────────────────── */
+.canvas-hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 0.05em;
+}
+
+/* ── Interactive canvas wrapper ─────────────────────────────────────────────── */
+.icanvas-wrap {
+  overflow: auto;
+  border-radius: 8px;
+  position: relative;
+  z-index: 1;
+  max-height: none;
+  /* ensure it sits above sidebar/layout */
+  isolation: isolate;
+}
+
+.icanvas {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: visible;
+  user-select: none;
+  flex-shrink: 0;
+  /* inline-block so the wrap scrolls to exactly the canvas size */
+  display: inline-block;
+}
+
+.icanvas-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+/* ── Canvas items ───────────────────────────────────────────────────────────── */
+.icanvas-item {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1.5px dashed transparent;
+  border-radius: 3px;
+  transition: border-color 0.1s;
+  overflow: visible;
+  touch-action: none;  /* zero-latency touch on items */
+}
+.icanvas-item:hover  { border-color: rgba(123,108,255,0.4); }
+.icanvas-item.selected { border-color: rgba(123,108,255,0.8); border-style: solid; }
+
+/* signature image */
+.icanvas-sig-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+}
+
+.icanvas-photo-img {
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+/* text preview */
+.icanvas-text-preview {
+  position: absolute;
+  bottom: 1px;
+  left: 0;
+  right: 0;
+  padding: 0 2px;
+  box-sizing: border-box;
+  color: #1a1a2e;
+  white-space: nowrap;
+  overflow: visible;
+  pointer-events: none;
+  line-height: 1;
+  transform-origin: left bottom;
+}
+.icanvas-placeholder { color: #aaa; font-size: 10px; font-style: italic; }
+
+/* inline editor */
+.icanvas-edit-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 4px;
+  background: rgba(123,108,255,0.08);
+  border-top: 1px solid rgba(123,108,255,0.2);
+  gap: 6px;
+}
+.icanvas-size-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: #888;
+  font-family: var(--font-mono);
+}
+.icanvas-size-input {
+  width: 40px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 1px 4px;
+  font-size: 11px;
+  color: #1a1a2e;
+  outline: none;
+  background: #fff;
+}
+
+/* delete button */
+/* icanvas-delete removed — delete now lives in toolbar */
+
+/* resize handles */
+.icanvas-handle {
+  position: absolute;
+  background: var(--accent);
+  border: 2px solid #fff;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  z-index: 5;
+}
+
+/* ── Placed items summary ───────────────────────────────────────────────────── */
+.placed-summary { display: flex; flex-direction: column; gap: 6px; }
+
+.placed-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(34,197,94,0.06);
+  border: 1px solid rgba(34,197,94,0.2);
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #22c55e;
+}
+
+.placed-remove {
+  background: none; border: none; color: var(--text3);
+  cursor: pointer; font-size: 12px; padding: 0 4px;
+  transition: color 0.12s;
+}
+.placed-remove:hover { color: #ef4444; }
+
+/* ── Signature picker modal ─────────────────────────────────────────────────── */
+.sig-picker-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.sig-picker {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  width: 520px;
+  max-width: 95vw;
+  display: flex; flex-direction: column; gap: 16px;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.4);
+}
+
+.sig-picker-header {
+  display: flex; align-items: center; justify-content: space-between;
+  font-family: var(--font-mono); font-size: 12px;
+  color: var(--text2); text-transform: uppercase; letter-spacing: 0.1em;
+}
+
+.sig-picker-close {
+  background: none; border: none; color: var(--text3);
+  cursor: pointer; font-size: 16px; padding: 0;
+  transition: color 0.12s;
+}
+.sig-picker-close:hover { color: var(--text1); }
+
+.sig-tabs {
+  display: flex; gap: 4px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.sig-tab {
+  flex: 1; padding: 8px 16px;
+  border-radius: 7px; border: none;
+  background: transparent; color: var(--text3);
+  font-family: var(--font-mono); font-size: 12px;
+  cursor: pointer; transition: all 0.15s;
+}
+.sig-tab.active { background: var(--bg3); color: var(--text1); border: 1px solid var(--border); }
+
+/* ── Draw pad ───────────────────────────────────────────────────────────────── */
+.drawpad-wrap { display: flex; flex-direction: column; gap: 12px; }
+
+.drawpad-canvas {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff;
+  cursor: crosshair;
+  touch-action: none;
+  width: 100%;
+  display: block;
+}
+
+.drawpad-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ── Type pad ───────────────────────────────────────────────────────────────── */
+.typepad-wrap { display: flex; flex-direction: column; gap: 12px; }
+
+.typepad-font-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.font-chip {
+  padding: 6px 14px; border-radius: 20px;
+  border: 1px solid var(--border); background: var(--bg2);
+  color: var(--text2); font-size: 15px; cursor: pointer;
+  transition: all 0.12s;
+}
+.font-chip:hover  { border-color: var(--border2); color: var(--text1); }
+.font-chip.active { border-color: rgba(123,108,255,0.5); background: rgba(123,108,255,0.1); color: var(--accent); }
+
+.typepad-input {
+  background: #ffffff; border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 18px;
+  font-size: 26px; color: #1a1a2e; outline: none;
+  width: 100%; box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+.typepad-input:focus { border-color: rgba(123,108,255,0.5); }
+.typepad-input::placeholder { color: #aaa; font-style: italic; }
+
+/* ── Shared small variants ──────────────────────────────────────────────────── */
+.btn-primary.small,
+.btn-ghost.small {
+  padding: 7px 14px;
+  font-size: 12px;
+}
+
+/* ── PDF page background ────────────────────────────────────────────────────── */
+.icanvas-pdf-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.icanvas-pdf-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #aaa;
+  letter-spacing: 0.08em;
+  pointer-events: none;
+}
+
+/* ── Toolbar font size control ──────────────────────────────────────────────── */
+.toolbar-font-size {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+}
+
+.toolbar-font-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.toolbar-font-input {
+  width: 44px;
+  padding: 5px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg3);
+  color: var(--text1);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  outline: none;
+  text-align: center;
+}
+.toolbar-font-input:focus { border-color: rgba(123,108,255,0.5); }
+
+/* ── Transparent textarea (no toolbar) ──────────────────────────────────────── */
+.icanvas-edit-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+}
+
+.icanvas-textarea {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  box-sizing: border-box;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 0 2px;
+  color: #1a1a2e;
+  background: rgba(255,255,250,0.9);
+  font-family: inherit;
+  overflow: hidden;
+  line-height: 1;
+  vertical-align: bottom;
+  display: flex;
+  align-items: flex-end;
+}
+
+/* ── Checkbox item ──────────────────────────────────────────────────────────── */
+.icanvas-checkmark-item {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1a1a2e;
+  font-weight: bold;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Touch / mobile fixes ───────────────────────────────────────────────────── */
+.icanvas {
+  touch-action: pan-y;  /* allow vertical scroll; JS blocks it only while dragging */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Bigger tap targets on toolbar buttons for mobile */
+@media (max-width: 640px) {
+  .toolbar-btn {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  .canvas-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .canvas-toolbar-left {
+    flex-wrap: wrap;
+  }
+
+  .icanvas-delete {
+    width: 26px;
+    height: 26px;
+    font-size: 11px;
+    top: -13px;
+    right: -13px;
+  }
+
+  .icanvas-wrap {
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ── Selection action row ───────────────────────────────────────────────────── */
+.toolbar-selection-row {
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.toolbar-selected-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  align-self: center;
+}
+
+.toolbar-btn.danger {
+  border-color: rgba(239,68,68,0.4);
+  background: rgba(239,68,68,0.08);
+  color: #ef4444;
+}
+.toolbar-btn.danger:hover {
+  background: rgba(239,68,68,0.18);
+  border-color: rgba(239,68,68,0.6);
+}
+
+/* ── Tips box ───────────────────────────────────────────────────────────────── */
+.tips-box {
+  border: 1px solid rgba(123,108,255,0.25);
+  border-radius: 8px;
+  background: rgba(123,108,255,0.04);
+  overflow: hidden;
+  margin-bottom: 2px;
+}
+
+.tips-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text2);
+}
+.tips-toggle:hover { background: rgba(123,108,255,0.06); }
+
+.tips-icon { font-size: 14px; }
+
+.tips-title {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+
+.tips-chevron {
+  font-size: 14px;
+  color: var(--text3);
+  transition: transform 0.2s;
+  display: inline-block;
+}
+.tips-chevron.open { transform: rotate(180deg); }
+
+.tips-list {
+  margin: 0;
+  padding: 4px 16px 14px 16px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  border-top: 1px solid rgba(123,108,255,0.12);
+}
+
+.tips-list li {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.5;
+}
+
+.tips-list strong { color: var(--text1); }
+.tips-list em { color: var(--accent); font-style: normal; font-weight: 600; }
+/* ── Mobile ─────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .sign-tool { gap: 14px; }
+  .sign-section { padding: 14px; gap: 12px; }
+
+  /* Canvas toolbar wraps nicely */
+  .canvas-toolbar { gap: 8px; }
+  .canvas-toolbar-left { gap: 6px; flex-wrap: wrap; }
+  .toolbar-btn { padding: 7px 10px; font-size: 11px; }
+  .toolbar-font-input { width: 44px; }
+
+  /* Page picker scrollable */
+  .page-picker { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Canvas hint smaller */
+  .canvas-hint { font-size: 10px; }
+
+  /* Submit button full width */
+  .sign-submit-btn { width: 100%; }
+
+  /* Field inputs full width */
+  .field-input { font-size: 14px; }  /* 16px minimum prevents iOS zoom */
+
+  /* DrawPad fits screen */
+  .drawpad-canvas { width: 100% !important; height: 180px !important; }
+
+  /* Sig picker modal full screen on mobile */
+  .sig-picker-overlay { align-items: flex-end; }
+  .sig-picker-modal {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    max-height: 85dvh;
+  }
+}
+/* ── Undo/redo toolbar additions ─────────────────────────────────────────── */
+.toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ── Draft restore banner ────────────────────────────────────────────────── */
+.draft-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(123,108,255,0.08);
+  border: 1px solid rgba(123,108,255,0.25);
+  border-radius: 10px;
+  font-size: 12px;
+  color: var(--text2);
+  font-family: var(--font-mono);
+  flex-wrap: wrap;
+}
+
+.draft-banner span { flex: 1; min-width: 0; }
+
+.draft-btn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.draft-btn:hover { opacity: 0.8; }
+
+.draft-btn.restore {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+}
+
+.draft-btn.dismiss {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text3);
+}
+.draft-btn.dismiss:hover { border-color: var(--text2); color: var(--text2); }
+
+@media (max-width: 768px) {
+  .draft-banner { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .draft-btn { width: 100%; text-align: center; padding: 8px; }
+}
