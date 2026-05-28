@@ -33,6 +33,29 @@ function readFileAsDataUrl(file) {
   });
 }
 
+function resizeDataUrl(dataUrl, maxDimension = 1400, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => {
+      const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+      const width = Math.max(1, Math.round(image.width * scale));
+      const height = Math.max(1, Math.round(image.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Could not prepare image for upload."));
+        return;
+      }
+      ctx.drawImage(image, 0, 0, width, height);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    image.onerror = () => reject(new Error("Could not read image file."));
+    image.src = dataUrl;
+  });
+}
+
 const TYPED_FONTS = [
   { label: "Cursive",     value: "'Dancing Script', cursive" },
   { label: "Elegant",     value: "'Great Vibes', cursive" },
@@ -800,9 +823,10 @@ function StepSign({ file, analysis, onBack }) {
 
     try {
       const imageData = await readFileAsDataUrl(nextFile);
-      setPhotoImage(imageData);
+      const compressed = await resizeDataUrl(imageData);
+      setPhotoImage(compressed);
       setError("");
-      placePhoto(imageData);
+      placePhoto(compressed);
     } catch {
       setError("We couldn't read that image. Please try another one.");
       hapticError();
@@ -883,6 +907,8 @@ function StepSign({ file, analysis, onBack }) {
       trackToolAction("sign", "sign_apply", "success", { annotations: annotations.length });
       toastSuccess("Signed PDF downloaded!");
     } catch (err) {
+      console.debug("[sign/apply] debug status:", err?.response?.status);
+      console.debug("[sign/apply] debug raw data:", err?.response?.data);
       const msg = await getFriendlyApiError(err, "We couldn't finish signing that PDF. Please try again.", {
         networkMessage: "We couldn't connect right now. Please try again in a moment.",
         fileTooLargeMessage: "This file is too large to process. Please choose a smaller PDF and try again.",
@@ -890,7 +916,11 @@ function StepSign({ file, analysis, onBack }) {
       setError(msg);
       hapticError();
       trackToolAction("sign", "sign_apply", "error", { annotations: annotations.length });
-      reportFrontendError("sign_apply_failed", err, { tool: "sign", annotations: annotations.length });
+      reportFrontendError("sign_apply_failed", msg, {
+        tool: "sign",
+        annotations: annotations.length,
+        backend_detail: msg,
+      });
     } finally { setLoading(false); }
   };
 

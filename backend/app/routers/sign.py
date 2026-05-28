@@ -32,8 +32,15 @@ async def sign_analyze(file: UploadFile = File(...)):
     """
     logger.info(f"[/sign/analyze] '{file.filename}' size={file.size}")
 
-    if file.content_type != "application/pdf":
-        raise HTTPException(status_code=400, detail="File must be a PDF.")
+    content_type = (file.content_type or "").lower()
+    filename = (file.filename or "").lower()
+    if content_type != "application/pdf" and not filename.endswith(".pdf"):
+        detail = f"File must be a PDF. Received content type '{file.content_type or 'unknown'}'."
+        logger.warning(f"[/sign/analyze] rejecting upload: {detail}")
+        raise HTTPException(
+            status_code=400,
+            detail=detail,
+        )
     _check_size(file)
 
     temp_dir   = make_temp_dir()
@@ -80,20 +87,41 @@ async def sign_apply(
     Returns the filled/signed PDF as a download.
     """
     logger.info(f"[/sign/apply] '{file.filename}' size={file.size}")
+    logger.info(
+        "[/sign/apply] raw payload lengths field_values=%d annotations=%d",
+        len(field_values or ""),
+        len(annotations or ""),
+    )
+    logger.info(
+        "[/sign/apply] raw payload preview field_values=%r annotations=%r",
+        (field_values or "")[:500],
+        (annotations or "")[:500],
+    )
 
-    if file.content_type != "application/pdf":
-        raise HTTPException(status_code=400, detail="File must be a PDF.")
+    content_type = (file.content_type or "").lower()
+    filename = (file.filename or "").lower()
+    if content_type != "application/pdf" and not filename.endswith(".pdf"):
+        detail = f"File must be a PDF. Received content type '{file.content_type or 'unknown'}'."
+        logger.warning(f"[/sign/apply] rejecting upload: {detail}")
+        raise HTTPException(
+            status_code=400,
+            detail=detail,
+        )
     _check_size(file)
 
     # Parse JSON payloads
     try:
         fv = json.loads(field_values)
     except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="field_values must be valid JSON.")
+        detail = "field_values must be valid JSON."
+        logger.warning(f"[/sign/apply] rejecting payload: {detail}")
+        raise HTTPException(status_code=400, detail=detail)
     try:
         anns = json.loads(annotations)
     except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="annotations must be valid JSON.")
+        detail = "annotations must be valid JSON."
+        logger.warning(f"[/sign/apply] rejecting payload: {detail}")
+        raise HTTPException(status_code=400, detail=detail)
 
     if not fv and not anns:
         raise HTTPException(
