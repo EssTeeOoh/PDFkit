@@ -104,6 +104,34 @@ python -m unittest tests.test_api_routes
 - Word to PDF remains unavailable unless LibreOffice is installed on the backend host.
 - OCR-based PDF to Word requires both Tesseract and Poppler on the backend host.
 
+## Cloud Run Deployment
+
+This backend is ready to run in a container. The included [Dockerfile](Dockerfile) installs:
+
+- LibreOffice
+- Tesseract OCR
+- Poppler utilities
+
+Build and run locally from the `backend/` directory:
+
+```cmd
+docker build -t pdfkit-backend .
+docker run --rm -p 8080:8080 --env-file .env pdfkit-backend
+```
+
+For Cloud Run, deploy the `backend/` folder as the source root or use the Dockerfile directly. Set these env vars in Cloud Run:
+
+- `PDFKIT_CORS_ORIGINS`
+  Comma-separated list of frontend origins, for example `https://your-app.vercel.app`
+- `PDFKIT_LIBREOFFICE_PATH`
+  Optional override if LibreOffice is installed at a nonstandard path
+- `PDFKIT_TESSERACT_PATH`
+  Optional override if Tesseract is installed at a nonstandard path
+- `PDFKIT_POPPLER_PATH`
+  Optional override if Poppler is installed at a nonstandard path
+
+Cloud Run listens on port `8080`, which matches the container default.
+
 ## Roadmap
 
 See [ROADMAP.md](ROADMAP.md).
