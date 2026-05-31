@@ -482,15 +482,15 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
     stateRef.current.setEditState(null);
   };
 
-  const updateEditingItem = useCallback((patch, syncContent = false) => {
+  const updateTextItem = useCallback((itemId, patch, syncContent = false) => {
     const { editingId: eid, setItems: si, setEditState: se, items: its } = stateRef.current;
-    if (!eid) return;
-    si(prev => prev.map(it => it.id === eid ? { ...it, ...patch } : it));
-    if (syncContent && Object.prototype.hasOwnProperty.call(patch, "content")) {
+    if (!itemId) return;
+    si(prev => prev.map(it => it.id === itemId ? { ...it, ...patch } : it));
+    if (syncContent && Object.prototype.hasOwnProperty.call(patch, "content") && eid === itemId) {
       se(prev => (prev ? { ...prev, content: patch.content } : prev));
     }
     if (onTextStyleChange) {
-      const current = its.find(it => it.id === eid) || {};
+      const current = its.find(it => it.id === itemId) || {};
       const next = { ...normalizeTextStyle(current), ...patch };
       onTextStyleChange(normalizeTextStyle(next));
     }
@@ -611,6 +611,7 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
       {items.map(item => {
         const isSel     = selectedId === item.id;
         const isEditing = editingId  === item.id;
+        const showTextBar = item.type === "text" && isSel && !isEditing;
         const textStyle = normalizeTextStyle(item);
 
         return (
@@ -637,48 +638,49 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
             )}
 
             {/* text preview */}
-            {item.type === "text" && !isEditing && (
-              <div
-                className="icanvas-text-preview"
-                style={{
-                  fontSize: textStyle.font_size,
-                  fontWeight: textStyle.font_weight,
-                  fontStyle: textStyle.font_style,
-                  color: textStyle.color,
-                  lineHeight: 1,
-                }}
-              >
-                {item.content || <span className="icanvas-placeholder">dbl-click</span>}
-              </div>
-            )}
-
-            {/* text editor */}
-            {item.type === "text" && isEditing && (
+            {item.type === "text" && (
               <div className="icanvas-edit-wrap"
                 onMouseDown={e => e.stopPropagation()}
                 onTouchStart={e => e.stopPropagation()}
               >
-                <TextFormatBar
-                  item={item}
-                  contentValue={editState.content}
-                  onApplyPatch={(patch) => updateEditingItem(patch, false)}
-                  onApplyContent={(content) => updateEditingItem({ content }, true)}
-                />
-                <textarea
-                  className="icanvas-textarea"
-                  autoFocus
-                  value={editState.content}
-                  style={{
-                    fontSize: textStyle.font_size,
-                    fontWeight: textStyle.font_weight,
-                    fontStyle: textStyle.font_style,
-                    color: textStyle.color,
-                    lineHeight: 1,
-                  }}
-                  onChange={e => stateRef.current.setEditState(prev => ({ ...prev, content: e.target.value }))}
-                  onBlur={commitEdit}
-                  onKeyDown={e => { if (e.key === "Escape") commitEdit(); }}
-                />
+                {showTextBar && (
+                  <TextFormatBar
+                    item={item}
+                    contentValue={item.content}
+                    onApplyPatch={(patch) => updateTextItem(item.id, patch, isEditing)}
+                    onApplyContent={(content) => updateTextItem(item.id, { content }, true)}
+                  />
+                )}
+                {isEditing ? (
+                  <textarea
+                    className="icanvas-textarea"
+                    autoFocus
+                    value={editState.content}
+                    style={{
+                      fontSize: textStyle.font_size,
+                      fontWeight: textStyle.font_weight,
+                      fontStyle: textStyle.font_style,
+                      color: textStyle.color,
+                      lineHeight: 1,
+                    }}
+                    onChange={e => stateRef.current.setEditState(prev => ({ ...prev, content: e.target.value }))}
+                    onBlur={commitEdit}
+                    onKeyDown={e => { if (e.key === "Escape") commitEdit(); }}
+                  />
+                ) : (
+                  <div
+                    className="icanvas-text-preview"
+                    style={{
+                      fontSize: textStyle.font_size,
+                      fontWeight: textStyle.font_weight,
+                      fontStyle: textStyle.font_style,
+                      color: textStyle.color,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {item.content || <span className="icanvas-placeholder">dbl-click</span>}
+                  </div>
+                )}
               </div>
             )}
 
