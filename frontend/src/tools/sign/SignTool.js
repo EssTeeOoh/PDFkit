@@ -68,12 +68,6 @@ const nextId = () => String(_nextId++);
 
 const HANDLE_SIZE = 8;
 const HANDLES = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
-const DEFAULT_TEXT_STYLE = {
-  font_size: 12,
-  font_weight: 400,
-  font_style: "normal",
-  color: "#1a1a2e",
-};
 const TEXT_COLORS = [
   { label: "Ink", value: "#1a1a2e" },
   { label: "Slate", value: "#475569" },
@@ -96,26 +90,13 @@ function cursorForHandle(h) {
   }[h] || "default";
 }
 
-function normalizeTextStyle(item = {}) {
-  return {
-    font_size: item.font_size ?? DEFAULT_TEXT_STYLE.font_size,
-    font_weight: item.font_weight ?? DEFAULT_TEXT_STYLE.font_weight,
-    font_style: item.font_style || DEFAULT_TEXT_STYLE.font_style,
-    color: item.color || DEFAULT_TEXT_STYLE.color,
-  };
-}
-
 function extractInitials(text) {
   const parts = String(text || "")
     .trim()
     .split(/\s+/)
     .filter(Boolean);
   if (!parts.length) return "";
-  return parts
-    .map(part => part[0])
-    .join("")
-    .slice(0, 4)
-    .toUpperCase();
+  return parts.map(part => part[0]).join("").slice(0, 4).toUpperCase();
 }
 
 function formatToday() {
@@ -124,101 +105,6 @@ function formatToday() {
     month: "short",
     day: "numeric",
   }).format(new Date());
-}
-
-function TextFormatBar({ item, contentValue, onApplyPatch, onApplyContent }) {
-  const [paletteOpen, setPaletteOpen] = useState(false);
-  if (!item) return null;
-
-  const current = normalizeTextStyle(item);
-  const isBold = Number(current.font_weight) >= 600;
-  const isItalic = String(current.font_style).toLowerCase() === "italic";
-  const textValue = contentValue ?? item.content;
-  const hasContent = Boolean(String(textValue || "").trim());
-
-  const setStyle = (patch) => {
-    onApplyPatch(patch);
-  };
-
-  return (
-    <div className="text-format-bar" onMouseDown={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()}>
-      <button
-        type="button"
-        className={`text-format-btn ${isBold ? "active" : ""}`}
-        title="Bold"
-        onMouseDown={(e) => e.preventDefault()}
-        onTouchStart={(e) => e.preventDefault()}
-        onClick={() => setStyle({ font_weight: isBold ? 400 : 700 })}
-      >
-        B
-      </button>
-      <button
-        type="button"
-        className={`text-format-btn ${isItalic ? "active" : ""}`}
-        title="Italic"
-        onMouseDown={(e) => e.preventDefault()}
-        onTouchStart={(e) => e.preventDefault()}
-        onClick={() => setStyle({ font_style: isItalic ? "normal" : "italic" })}
-      >
-        I
-      </button>
-      <div className="text-color-wrap">
-        <button
-          type="button"
-          className="text-format-btn text-color-btn"
-          title="Text color"
-          onMouseDown={(e) => e.preventDefault()}
-          onTouchStart={(e) => e.preventDefault()}
-          onClick={() => setPaletteOpen((open) => !open)}
-        >
-          <span className="text-color-dot" style={{ backgroundColor: current.color }} />
-        </button>
-        {paletteOpen && (
-          <div className="text-color-popover">
-            {TEXT_COLORS.map(color => (
-              <button
-                key={color.value}
-                type="button"
-                className={`text-color-swatch ${current.color === color.value ? "active" : ""}`}
-                style={{ backgroundColor: color.value }}
-                title={color.label}
-                onMouseDown={(e) => e.preventDefault()}
-                onTouchStart={(e) => e.preventDefault()}
-                onClick={() => {
-                  setStyle({ color: color.value });
-                  setPaletteOpen(false);
-                }}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-      <button
-        type="button"
-        className="text-format-btn text-format-action"
-        title={hasContent ? "Convert typed name to initials" : "Type a name first to use initials"}
-        disabled={!hasContent}
-        onMouseDown={(e) => e.preventDefault()}
-        onTouchStart={(e) => e.preventDefault()}
-        onClick={() => {
-          const initials = extractInitials(textValue);
-          if (initials) onApplyContent(initials);
-        }}
-      >
-        Initials
-      </button>
-      <button
-        type="button"
-        className="text-format-btn text-format-action"
-        title="Insert today's date"
-        onMouseDown={(e) => e.preventDefault()}
-        onTouchStart={(e) => e.preventDefault()}
-        onClick={() => onApplyContent(formatToday())}
-      >
-        Date
-      </button>
-    </div>
-  );
 }
 
 /* ─── DrawPad ───────────────────────────────────────────────────────────────── */
@@ -406,7 +292,7 @@ function PdfPageRenderer({ file, pageNumber, width }) {
 
 
 /* ─── InteractiveCanvas ─────────────────────────────────────────────────────── */
-function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageHeight, onSelectionChange, onWidthChange, onTextStyleChange }) {
+function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageHeight, onSelectionChange, onWidthChange }) {
   const [PREVIEW_W, setPREVIEW_W] = useState(794);
   const PREVIEW_H = Math.round(PREVIEW_W * (pageHeight / pageWidth));
 
@@ -481,20 +367,6 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
     stateRef.current.setEditingId(null);
     stateRef.current.setEditState(null);
   };
-
-  const updateTextItem = useCallback((itemId, patch, syncContent = false) => {
-    const { editingId: eid, setItems: si, setEditState: se, items: its } = stateRef.current;
-    if (!itemId) return;
-    si(prev => prev.map(it => it.id === itemId ? { ...it, ...patch } : it));
-    if (syncContent && Object.prototype.hasOwnProperty.call(patch, "content") && eid === itemId) {
-      se(prev => (prev ? { ...prev, content: patch.content } : prev));
-    }
-    if (onTextStyleChange) {
-      const current = its.find(it => it.id === itemId) || {};
-      const next = { ...normalizeTextStyle(current), ...patch };
-      onTextStyleChange(normalizeTextStyle(next));
-    }
-  }, [onTextStyleChange]);
 
   const pointerDown = (e) => {
     const { editingId: eid, items: its } = stateRef.current;
@@ -611,8 +483,6 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
       {items.map(item => {
         const isSel     = selectedId === item.id;
         const isEditing = editingId  === item.id;
-        const showTextBar = item.type === "text" && isSel && !isEditing;
-        const textStyle = normalizeTextStyle(item);
 
         return (
           <div key={item.id}
@@ -638,49 +508,30 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
             )}
 
             {/* text preview */}
-            {item.type === "text" && (
+            {item.type === "text" && !isEditing && (
+              <div
+                className="icanvas-text-preview"
+                style={{ fontSize: item.font_size || 12, lineHeight: 1 }}
+              >
+                {item.content || <span className="icanvas-placeholder">dbl-click</span>}
+              </div>
+            )}
+
+            {/* text editor */}
+            {item.type === "text" && isEditing && (
               <div className="icanvas-edit-wrap"
                 onMouseDown={e => e.stopPropagation()}
                 onTouchStart={e => e.stopPropagation()}
               >
-                {showTextBar && (
-                  <TextFormatBar
-                    item={item}
-                    contentValue={item.content}
-                    onApplyPatch={(patch) => updateTextItem(item.id, patch, isEditing)}
-                    onApplyContent={(content) => updateTextItem(item.id, { content }, true)}
-                  />
-                )}
-                {isEditing ? (
-                  <textarea
-                    className="icanvas-textarea"
-                    autoFocus
-                    value={editState.content}
-                    style={{
-                      fontSize: textStyle.font_size,
-                      fontWeight: textStyle.font_weight,
-                      fontStyle: textStyle.font_style,
-                      color: textStyle.color,
-                      lineHeight: 1,
-                    }}
-                    onChange={e => stateRef.current.setEditState(prev => ({ ...prev, content: e.target.value }))}
-                    onBlur={commitEdit}
-                    onKeyDown={e => { if (e.key === "Escape") commitEdit(); }}
-                  />
-                ) : (
-                  <div
-                    className="icanvas-text-preview"
-                    style={{
-                      fontSize: textStyle.font_size,
-                      fontWeight: textStyle.font_weight,
-                      fontStyle: textStyle.font_style,
-                      color: textStyle.color,
-                      lineHeight: 1,
-                    }}
-                  >
-                    {item.content || <span className="icanvas-placeholder">dbl-click</span>}
-                  </div>
-                )}
+                <textarea
+                  className="icanvas-textarea"
+                  autoFocus
+                  value={editState.content}
+                  style={{ fontSize: editState.font_size || 12, lineHeight: 1 }}
+                  onChange={e => stateRef.current.setEditState(prev => ({ ...prev, content: e.target.value }))}
+                  onBlur={commitEdit}
+                  onKeyDown={e => { if (e.key === "Escape") commitEdit(); }}
+                />
               </div>
             )}
 
@@ -884,7 +735,6 @@ function StepSign({ file, analysis, onBack }) {
   const [photoImage,    setPhotoImage]    = useState(null);
   const [sigPickerOpen, setSigPickerOpen] = useState(false);
   const [globalFontSize, setGlobalFontSize] = useState(12);
-  const [defaultTextStyle, setDefaultTextStyle] = useState(DEFAULT_TEXT_STYLE);
   const [selectedItemId, setSelectedItemId] = useState(null);
   const photoInputRef = useRef(null);
 
@@ -940,30 +790,70 @@ function StepSign({ file, analysis, onBack }) {
 
   // px input always shows globalFontSize — changing it updates both global and selected item
   const selectedItem = currentItems.find(it => it.id === selectedItemId && it.type === "text");
-  const selectedTextStyle = selectedItem ? normalizeTextStyle(selectedItem) : defaultTextStyle;
+  const [textStyleDefaults, setTextStyleDefaults] = useState({
+    font_size: 12,
+    font_weight: 400,
+    font_style: "normal",
+    color: "#1a1a2e",
+  });
+  const [textToolsOpen, setTextToolsOpen] = useState(true);
+  const [textColorOpen, setTextColorOpen] = useState(false);
+  const textColorWrapRef = useRef(null);
+
+  const applyTextPatch = (patch) => {
+    setTextStyleDefaults(prev => ({ ...prev, ...patch }));
+    if (selectedItem) {
+      setCurrentItems(prev => prev.map(it => (
+        it.id === selectedItemId ? { ...it, ...patch } : it
+      )));
+    }
+  };
+
+  const applyTextAction = (mutate) => {
+    if (!selectedItem) return;
+    setCurrentItems(prev => prev.map(it => {
+      if (it.id !== selectedItemId) return it;
+      return { ...it, content: mutate(it.content || "") };
+    }));
+  };
 
   const handleFontSizeChange = (val) => {
     const size = Math.min(40, Math.max(6, Number(val)));
     setGlobalFontSize(size);
-    setDefaultTextStyle(prev => ({ ...prev, font_size: size }));
+    setTextStyleDefaults(prev => ({ ...prev, font_size: size }));
     if (selectedItem) {
       setCurrentItems(prev => prev.map(it => it.id === selectedItemId ? { ...it, font_size: size } : it));
     }
   };
 
   const addTextBox = () => {
-    const baseStyle = selectedItem ? normalizeTextStyle(selectedItem) : selectedTextStyle;
-    const fs = baseStyle.font_size || globalFontSize || 12;
+    const fs = textStyleDefaults.font_size || globalFontSize || 12;
     setCurrentItems(prev => [...(prev || []), {
       id: nextId(), type: "text",
       x: 40, y: 40, width: 160, height: Math.round(fs * 1.6),
       content: "",
       font_size: fs,
-      font_weight: baseStyle.font_weight,
-      font_style: baseStyle.font_style,
-      color: baseStyle.color,
+      font_weight: textStyleDefaults.font_weight,
+      font_style: textStyleDefaults.font_style,
+      color: textStyleDefaults.color,
     }]);
   };
+
+  useEffect(() => {
+    if (!textColorOpen) return;
+    const onPointerDown = (e) => {
+      const wrap = textColorWrapRef.current;
+      if (wrap && !wrap.contains(e.target)) {
+        setTextColorOpen(false);
+      }
+    };
+    window.addEventListener("mousedown", onPointerDown);
+    window.addEventListener("touchstart", onPointerDown, { passive: true });
+    return () => {
+      window.removeEventListener("mousedown", onPointerDown);
+      window.removeEventListener("touchstart", onPointerDown);
+    };
+  }, [textColorOpen]);
 
   const addSignature = () => {
     if (!sigImage) { setSigPickerOpen(true); return; }
@@ -1052,9 +942,6 @@ function StepSign({ file, analysis, onBack }) {
           width: item.width, height: item.height,
           content: item.type === "checkbox" ? "\u2713" : (item.content || ""),
           font_size: item.font_size || 12,
-          font_weight: item.font_weight ?? DEFAULT_TEXT_STYLE.font_weight,
-          font_style: item.font_style || DEFAULT_TEXT_STYLE.font_style,
-          color: item.color || DEFAULT_TEXT_STYLE.color,
           image_data: item.image_data || null,
           preview_width: PREVIEW_W,
           preview_height: pH,
@@ -1215,6 +1102,76 @@ function StepSign({ file, analysis, onBack }) {
                 onChange={e => handleFontSizeChange(e.target.value)}
               />
             </div>
+            <div className="toolbar-text-tools">
+              <button
+                className={`toolbar-btn ${textToolsOpen ? "active" : ""}`}
+                onClick={() => setTextToolsOpen(open => !open)}
+              >
+                Text Style
+              </button>
+              {textToolsOpen && (
+                <div className="toolbar-text-tools-panel">
+                  <button
+                    className={`toolbar-btn small ${selectedItem && (selectedItem.font_weight || 400) >= 600 ? "active" : ""}`}
+                    onClick={() => applyTextPatch({ font_weight: selectedItem && (selectedItem.font_weight || 400) >= 600 ? 400 : 700 })}
+                    disabled={!selectedItem}
+                  >
+                    B
+                  </button>
+                  <button
+                    className={`toolbar-btn small ${selectedItem && String(selectedItem.font_style || "normal").toLowerCase() === "italic" ? "active" : ""}`}
+                    onClick={() => applyTextPatch({ font_style: selectedItem && String(selectedItem.font_style || "normal").toLowerCase() === "italic" ? "normal" : "italic" })}
+                    disabled={!selectedItem}
+                  >
+                    I
+                  </button>
+                  <div className="text-color-wrap" ref={textColorWrapRef}>
+                    <button
+                      className="toolbar-btn small text-color-btn"
+                      onClick={() => setTextColorOpen(open => !open)}
+                      disabled={!selectedItem}
+                      title="Text color"
+                    >
+                      <span className="text-color-dot" style={{ backgroundColor: (selectedItem?.color || textStyleDefaults.color) }} />
+                    </button>
+                    {textColorOpen && (
+                      <div className="text-color-popover">
+                        {TEXT_COLORS.map(color => (
+                          <button
+                            key={color.value}
+                            type="button"
+                            className={`text-color-swatch ${(selectedItem?.color || textStyleDefaults.color) === color.value ? "active" : ""}`}
+                            style={{ backgroundColor: color.value }}
+                            title={color.label}
+                            onClick={() => {
+                              applyTextPatch({ color: color.value });
+                              setTextColorOpen(false);
+                            }}
+                            disabled={!selectedItem}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    className="toolbar-btn small"
+                    onClick={() => applyTextAction(text => extractInitials(text))}
+                    disabled={!selectedItem}
+                    title="Convert selected text to initials"
+                  >
+                    Initials
+                  </button>
+                  <button
+                    className="toolbar-btn small"
+                    onClick={() => applyTextAction(() => formatToday())}
+                    disabled={!selectedItem}
+                    title="Insert today's date"
+                  >
+                    Date
+                  </button>
+                </div>
+              )}
+            </div>
             {selectedItemId && (
               <div className="toolbar-selection-actions">
                 <button className="toolbar-btn dup" onClick={duplicateSelected} title="Duplicate">⧉ Dup</button>
@@ -1259,7 +1216,6 @@ function StepSign({ file, analysis, onBack }) {
             pageHeight={pageDim.height}
             onSelectionChange={setSelectedItemId}
             onWidthChange={setPREVIEW_W_outer}
-            onTextStyleChange={setDefaultTextStyle}
           />
         </div>
 

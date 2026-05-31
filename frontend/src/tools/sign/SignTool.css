@@ -513,8 +513,6 @@
   display: flex;
   flex-direction: column;
   background: transparent;
-  position: relative;
-  overflow: visible;
 }
 
 .icanvas-textarea {
@@ -538,65 +536,15 @@
   align-items: flex-end;
 }
 
-.text-format-bar {
-  position: absolute;
-  left: 0;
-  top: -48px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: rgba(18, 23, 33, 0.96);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
-  backdrop-filter: blur(10px);
-  z-index: 8;
-  flex-wrap: wrap;
-  max-width: min(360px, calc(100vw - 40px));
-}
-
-.text-format-btn {
-  min-width: 30px;
-  height: 30px;
-  padding: 0 10px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--bg3);
-  color: var(--text2);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.12s;
-}
-
-.text-format-btn:hover {
-  border-color: var(--border2);
-  color: var(--text1);
-}
-
-.text-format-btn.active {
-  border-color: rgba(123,108,255,0.55);
-  background: rgba(123,108,255,0.16);
-  color: var(--accent);
-}
-
-.text-format-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
 .text-color-wrap {
   position: relative;
 }
 
 .text-color-btn {
-  width: 30px;
-  padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
 }
 
 .text-color-dot {
@@ -638,6 +586,25 @@
 
 .text-color-swatch.active {
   box-shadow: 0 0 0 2px rgba(123,108,255,0.25);
+}
+
+.toolbar-text-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: 4px;
+}
+
+.toolbar-text-tools-panel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg2);
 }
 
 /* ── Checkbox item ──────────────────────────────────────────────────────────── */
@@ -690,13 +657,8 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  .text-format-bar {
-    top: -56px;
-    max-width: min(320px, calc(100vw - 28px));
-  }
-
-  .text-format-btn {
-    height: 32px;
+  .toolbar-text-tools-panel {
+    width: 100%;
   }
 
   .text-color-popover {
