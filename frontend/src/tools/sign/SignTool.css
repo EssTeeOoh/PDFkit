@@ -158,6 +158,11 @@
   white-space: nowrap;
 }
 .toolbar-btn:hover { border-color: var(--border2); color: var(--text1); }
+.toolbar-btn.active {
+  border-color: rgba(123,108,255,0.55);
+  background: rgba(123,108,255,0.14);
+  color: var(--accent);
+}
 
 .toolbar-btn.accent {
   border-color: rgba(123,108,255,0.4);
@@ -586,6 +591,10 @@
 
 .text-color-swatch.active {
   box-shadow: 0 0 0 2px rgba(123,108,255,0.25);
+}
+
+.text-color-btn {
+  position: relative;
 }
 
 .toolbar-text-tools {

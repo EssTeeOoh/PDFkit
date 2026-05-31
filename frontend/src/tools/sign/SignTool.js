@@ -76,6 +76,15 @@ const TEXT_COLORS = [
   { label: "Red", value: "#991b1b" },
 ];
 
+function getTextStyle(item = {}, fallback = {}) {
+  return {
+    font_size: item.font_size ?? fallback.font_size ?? 12,
+    font_weight: item.font_weight ?? fallback.font_weight ?? 400,
+    font_style: item.font_style ?? fallback.font_style ?? "normal",
+    color: item.color ?? fallback.color ?? "#1a1a2e",
+  };
+}
+
 function getHandleOffset(item, h) {
   const { width: w, height: ht } = item;
   const hx = h.includes("w") ? 0 : h.includes("e") ? w : w / 2;
@@ -483,6 +492,7 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
       {items.map(item => {
         const isSel     = selectedId === item.id;
         const isEditing = editingId  === item.id;
+        const textStyle  = getTextStyle(item);
 
         return (
           <div key={item.id}
@@ -511,7 +521,13 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
             {item.type === "text" && !isEditing && (
               <div
                 className="icanvas-text-preview"
-                style={{ fontSize: item.font_size || 12, lineHeight: 1 }}
+                style={{
+                  fontSize: textStyle.font_size,
+                  fontWeight: textStyle.font_weight,
+                  fontStyle: textStyle.font_style,
+                  color: textStyle.color,
+                  lineHeight: 1,
+                }}
               >
                 {item.content || <span className="icanvas-placeholder">dbl-click</span>}
               </div>
@@ -527,7 +543,13 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
                   className="icanvas-textarea"
                   autoFocus
                   value={editState.content}
-                  style={{ fontSize: editState.font_size || 12, lineHeight: 1 }}
+                  style={{
+                    fontSize: textStyle.font_size,
+                    fontWeight: textStyle.font_weight,
+                    fontStyle: textStyle.font_style,
+                    color: textStyle.color,
+                    lineHeight: 1,
+                  }}
                   onChange={e => stateRef.current.setEditState(prev => ({ ...prev, content: e.target.value }))}
                   onBlur={commitEdit}
                   onKeyDown={e => { if (e.key === "Escape") commitEdit(); }}
@@ -936,12 +958,16 @@ function StepSign({ file, analysis, onBack }) {
       const dim  = page_dimensions?.find(p => p.page === pNum) || { width: 612, height: 792 };
       const pH   = Math.round(PREVIEW_W * (dim.height / dim.width));
       items.forEach(item => {
+        const textStyle = getTextStyle(item, textStyleDefaults);
         ann.push({
           type: item.type === "photo" ? "signature" : item.type, page: pNum,
           x: item.x, y: item.y,
           width: item.width, height: item.height,
           content: item.type === "checkbox" ? "\u2713" : (item.content || ""),
           font_size: item.font_size || 12,
+          font_weight: textStyle.font_weight,
+          font_style: textStyle.font_style,
+          color: textStyle.color,
           image_data: item.image_data || null,
           preview_width: PREVIEW_W,
           preview_height: pH,
