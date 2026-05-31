@@ -8,6 +8,7 @@ from pypdf import PdfReader, PdfWriter
 from pypdf.annotations import FreeText
 from pypdf.generic import DictionaryObject
 from reportlab.pdfgen import canvas as rl_canvas
+from reportlab.lib.colors import HexColor, black
 from reportlab.lib.utils import ImageReader
 from PIL import Image
 
@@ -29,6 +30,28 @@ def _get_page_dimensions(reader: PdfReader) -> list[dict]:
             "height": float(mb.height),
         })
     return dims
+
+
+def _resolve_text_font(ann: dict) -> str:
+    bold = int(ann.get("font_weight", 400) or 400) >= 600
+    italic = str(ann.get("font_style", "normal")).lower() == "italic"
+    if bold and italic:
+        return "Helvetica-BoldOblique"
+    if bold:
+        return "Helvetica-Bold"
+    if italic:
+        return "Helvetica-Oblique"
+    return "Helvetica"
+
+
+def _resolve_text_color(ann: dict):
+    raw = str(ann.get("color", "") or "").strip()
+    if raw.startswith("#"):
+        try:
+            return HexColor(raw)
+        except Exception:
+            pass
+    return black
 
 
 def _get_fields(reader: PdfReader) -> list[dict]:
@@ -292,7 +315,8 @@ def apply_to_pdf(
                     c.line(x2, y2, x3, y3)
                     logger.debug(f"[sign/apply] checkmark at PDF ({pdf_x:.1f},{pdf_y_bot:.1f}) box=({box_pdf_w:.1f}x{box_pdf_h:.1f}) size={size:.1f}")
                 else:
-                    c.setFont("Helvetica", font_size)
+                    c.setFont(_resolve_text_font(ann), font_size)
+                    c.setFillColor(_resolve_text_color(ann))
                     c.drawString(pdf_x, pdf_y_bot, content)
 
             elif ann_type == "signature":

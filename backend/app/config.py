@@ -35,6 +35,8 @@ TESSERACT_PATHS = [
 
 POPPLER_PATHS = [
     "PDFKIT_POPPLER_PATH",
+    "/usr/bin",
+    "/usr/local/bin",
     r"C:\Program Files\poppler\Library\bin",
     None,
 ]
@@ -77,7 +79,7 @@ def get_cors_origins() -> list[str]:
     raw = os.getenv("PDFKIT_CORS_ORIGINS", "")
     if not raw.strip():
         return DEFAULT_CORS_ORIGINS
-    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+    return [origin.strip().rstrip("/") for origin in raw.split(",") if origin.strip()]
 
 
 def get_env_int(name: str, default: int) -> int:

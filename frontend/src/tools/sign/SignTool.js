@@ -68,6 +68,19 @@ const nextId = () => String(_nextId++);
 
 const HANDLE_SIZE = 8;
 const HANDLES = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
+const DEFAULT_TEXT_STYLE = {
+  font_size: 12,
+  font_weight: 400,
+  font_style: "normal",
+  color: "#1a1a2e",
+};
+const TEXT_COLORS = [
+  { label: "Ink", value: "#1a1a2e" },
+  { label: "Slate", value: "#475569" },
+  { label: "Blue", value: "#1d4ed8" },
+  { label: "Green", value: "#166534" },
+  { label: "Red", value: "#991b1b" },
+];
 
 function getHandleOffset(item, h) {
   const { width: w, height: ht } = item;
@@ -81,6 +94,131 @@ function cursorForHandle(h) {
     nw: "nw-resize", n: "n-resize", ne: "ne-resize", e: "e-resize",
     se: "se-resize", s: "s-resize", sw: "sw-resize", w: "w-resize",
   }[h] || "default";
+}
+
+function normalizeTextStyle(item = {}) {
+  return {
+    font_size: item.font_size ?? DEFAULT_TEXT_STYLE.font_size,
+    font_weight: item.font_weight ?? DEFAULT_TEXT_STYLE.font_weight,
+    font_style: item.font_style || DEFAULT_TEXT_STYLE.font_style,
+    color: item.color || DEFAULT_TEXT_STYLE.color,
+  };
+}
+
+function extractInitials(text) {
+  const parts = String(text || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!parts.length) return "";
+  return parts
+    .map(part => part[0])
+    .join("")
+    .slice(0, 4)
+    .toUpperCase();
+}
+
+function formatToday() {
+  return new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  }).format(new Date());
+}
+
+function TextFormatBar({ item, contentValue, onApplyPatch, onApplyContent }) {
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  if (!item) return null;
+
+  const current = normalizeTextStyle(item);
+  const isBold = Number(current.font_weight) >= 600;
+  const isItalic = String(current.font_style).toLowerCase() === "italic";
+  const textValue = contentValue ?? item.content;
+  const hasContent = Boolean(String(textValue || "").trim());
+
+  const setStyle = (patch) => {
+    onApplyPatch(patch);
+  };
+
+  return (
+    <div className="text-format-bar" onMouseDown={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()}>
+      <button
+        type="button"
+        className={`text-format-btn ${isBold ? "active" : ""}`}
+        title="Bold"
+        onMouseDown={(e) => e.preventDefault()}
+        onTouchStart={(e) => e.preventDefault()}
+        onClick={() => setStyle({ font_weight: isBold ? 400 : 700 })}
+      >
+        B
+      </button>
+      <button
+        type="button"
+        className={`text-format-btn ${isItalic ? "active" : ""}`}
+        title="Italic"
+        onMouseDown={(e) => e.preventDefault()}
+        onTouchStart={(e) => e.preventDefault()}
+        onClick={() => setStyle({ font_style: isItalic ? "normal" : "italic" })}
+      >
+        I
+      </button>
+      <div className="text-color-wrap">
+        <button
+          type="button"
+          className="text-format-btn text-color-btn"
+          title="Text color"
+          onMouseDown={(e) => e.preventDefault()}
+          onTouchStart={(e) => e.preventDefault()}
+          onClick={() => setPaletteOpen((open) => !open)}
+        >
+          <span className="text-color-dot" style={{ backgroundColor: current.color }} />
+        </button>
+        {paletteOpen && (
+          <div className="text-color-popover">
+            {TEXT_COLORS.map(color => (
+              <button
+                key={color.value}
+                type="button"
+                className={`text-color-swatch ${current.color === color.value ? "active" : ""}`}
+                style={{ backgroundColor: color.value }}
+                title={color.label}
+                onMouseDown={(e) => e.preventDefault()}
+                onTouchStart={(e) => e.preventDefault()}
+                onClick={() => {
+                  setStyle({ color: color.value });
+                  setPaletteOpen(false);
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+      <button
+        type="button"
+        className="text-format-btn text-format-action"
+        title={hasContent ? "Convert typed name to initials" : "Type a name first to use initials"}
+        disabled={!hasContent}
+        onMouseDown={(e) => e.preventDefault()}
+        onTouchStart={(e) => e.preventDefault()}
+        onClick={() => {
+          const initials = extractInitials(textValue);
+          if (initials) onApplyContent(initials);
+        }}
+      >
+        Initials
+      </button>
+      <button
+        type="button"
+        className="text-format-btn text-format-action"
+        title="Insert today's date"
+        onMouseDown={(e) => e.preventDefault()}
+        onTouchStart={(e) => e.preventDefault()}
+        onClick={() => onApplyContent(formatToday())}
+      >
+        Date
+      </button>
+    </div>
+  );
 }
 
 /* ─── DrawPad ───────────────────────────────────────────────────────────────── */
@@ -268,7 +406,7 @@ function PdfPageRenderer({ file, pageNumber, width }) {
 
 
 /* ─── InteractiveCanvas ─────────────────────────────────────────────────────── */
-function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageHeight, onSelectionChange, onWidthChange }) {
+function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageHeight, onSelectionChange, onWidthChange, onTextStyleChange }) {
   const [PREVIEW_W, setPREVIEW_W] = useState(794);
   const PREVIEW_H = Math.round(PREVIEW_W * (pageHeight / pageWidth));
 
@@ -339,10 +477,24 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
   const commitEdit = () => {
     const { editState: es, editingId: eid, setItems: si } = stateRef.current;
     if (!es || !eid) return;
-    si(prev => prev.map(it => it.id === eid ? { ...it, content: es.content, font_size: es.font_size } : it));
+    si(prev => prev.map(it => it.id === eid ? { ...it, content: es.content } : it));
     stateRef.current.setEditingId(null);
     stateRef.current.setEditState(null);
   };
+
+  const updateEditingItem = useCallback((patch, syncContent = false) => {
+    const { editingId: eid, setItems: si, setEditState: se, items: its } = stateRef.current;
+    if (!eid) return;
+    si(prev => prev.map(it => it.id === eid ? { ...it, ...patch } : it));
+    if (syncContent && Object.prototype.hasOwnProperty.call(patch, "content")) {
+      se(prev => (prev ? { ...prev, content: patch.content } : prev));
+    }
+    if (onTextStyleChange) {
+      const current = its.find(it => it.id === eid) || {};
+      const next = { ...normalizeTextStyle(current), ...patch };
+      onTextStyleChange(normalizeTextStyle(next));
+    }
+  }, [onTextStyleChange]);
 
   const pointerDown = (e) => {
     const { editingId: eid, items: its } = stateRef.current;
@@ -392,7 +544,7 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
     const item = its.find(it => it.id === hit.itemId);
     if (item?.type === "text") {
       stateRef.current.setEditingId(item.id);
-      stateRef.current.setEditState({ content: item.content || "", font_size: item.font_size || 12 });
+      stateRef.current.setEditState({ content: item.content || "" });
     }
   };
 
@@ -459,6 +611,7 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
       {items.map(item => {
         const isSel     = selectedId === item.id;
         const isEditing = editingId  === item.id;
+        const textStyle = normalizeTextStyle(item);
 
         return (
           <div key={item.id}
@@ -487,7 +640,13 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
             {item.type === "text" && !isEditing && (
               <div
                 className="icanvas-text-preview"
-                style={{ fontSize: item.font_size || 12, lineHeight: 1 }}
+                style={{
+                  fontSize: textStyle.font_size,
+                  fontWeight: textStyle.font_weight,
+                  fontStyle: textStyle.font_style,
+                  color: textStyle.color,
+                  lineHeight: 1,
+                }}
               >
                 {item.content || <span className="icanvas-placeholder">dbl-click</span>}
               </div>
@@ -499,11 +658,23 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
                 onMouseDown={e => e.stopPropagation()}
                 onTouchStart={e => e.stopPropagation()}
               >
+                <TextFormatBar
+                  item={item}
+                  contentValue={editState.content}
+                  onApplyPatch={(patch) => updateEditingItem(patch, false)}
+                  onApplyContent={(content) => updateEditingItem({ content }, true)}
+                />
                 <textarea
                   className="icanvas-textarea"
                   autoFocus
                   value={editState.content}
-                  style={{ fontSize: editState.font_size || 12, lineHeight: 1 }}
+                  style={{
+                    fontSize: textStyle.font_size,
+                    fontWeight: textStyle.font_weight,
+                    fontStyle: textStyle.font_style,
+                    color: textStyle.color,
+                    lineHeight: 1,
+                  }}
                   onChange={e => stateRef.current.setEditState(prev => ({ ...prev, content: e.target.value }))}
                   onBlur={commitEdit}
                   onKeyDown={e => { if (e.key === "Escape") commitEdit(); }}
@@ -711,6 +882,7 @@ function StepSign({ file, analysis, onBack }) {
   const [photoImage,    setPhotoImage]    = useState(null);
   const [sigPickerOpen, setSigPickerOpen] = useState(false);
   const [globalFontSize, setGlobalFontSize] = useState(12);
+  const [defaultTextStyle, setDefaultTextStyle] = useState(DEFAULT_TEXT_STYLE);
   const [selectedItemId, setSelectedItemId] = useState(null);
   const photoInputRef = useRef(null);
 
@@ -766,21 +938,28 @@ function StepSign({ file, analysis, onBack }) {
 
   // px input always shows globalFontSize — changing it updates both global and selected item
   const selectedItem = currentItems.find(it => it.id === selectedItemId && it.type === "text");
+  const selectedTextStyle = selectedItem ? normalizeTextStyle(selectedItem) : defaultTextStyle;
 
   const handleFontSizeChange = (val) => {
     const size = Math.min(40, Math.max(6, Number(val)));
     setGlobalFontSize(size);
+    setDefaultTextStyle(prev => ({ ...prev, font_size: size }));
     if (selectedItem) {
       setCurrentItems(prev => prev.map(it => it.id === selectedItemId ? { ...it, font_size: size } : it));
     }
   };
 
   const addTextBox = () => {
-    const fs = globalFontSize || 12;
+    const baseStyle = selectedItem ? normalizeTextStyle(selectedItem) : selectedTextStyle;
+    const fs = baseStyle.font_size || globalFontSize || 12;
     setCurrentItems(prev => [...(prev || []), {
       id: nextId(), type: "text",
       x: 40, y: 40, width: 160, height: Math.round(fs * 1.6),
-      content: "", font_size: fs,
+      content: "",
+      font_size: fs,
+      font_weight: baseStyle.font_weight,
+      font_style: baseStyle.font_style,
+      color: baseStyle.color,
     }]);
   };
 
@@ -871,6 +1050,9 @@ function StepSign({ file, analysis, onBack }) {
           width: item.width, height: item.height,
           content: item.type === "checkbox" ? "\u2713" : (item.content || ""),
           font_size: item.font_size || 12,
+          font_weight: item.font_weight ?? DEFAULT_TEXT_STYLE.font_weight,
+          font_style: item.font_style || DEFAULT_TEXT_STYLE.font_style,
+          color: item.color || DEFAULT_TEXT_STYLE.color,
           image_data: item.image_data || null,
           preview_width: PREVIEW_W,
           preview_height: pH,
@@ -1075,6 +1257,7 @@ function StepSign({ file, analysis, onBack }) {
             pageHeight={pageDim.height}
             onSelectionChange={setSelectedItemId}
             onWidthChange={setPREVIEW_W_outer}
+            onTextStyleChange={setDefaultTextStyle}
           />
         </div>
 
