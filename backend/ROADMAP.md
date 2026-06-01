@@ -124,6 +124,8 @@ This means:
 - [x] **Rate limiting** - In-memory per-IP rate limiting is now enforced for API routes with response headers and retry guidance.
 - [x] **CORS update** - Allowed frontend origins now come from environment config instead of being hardcoded to one localhost origin.
 
+**Deployment note:** the recommended production path is documented in [README.md](../README.md): GitHub as source control, Render for the backend, and Vercel for the frontend. The frontend build also auto-bumps the service worker cache version so installed users get updates in place instead of reinstalling.
+
 ---
 
 ## Completed Log
@@ -160,3 +162,4 @@ This means:
 | May 2026 | Configurable CORS origins and per-IP API rate limiting added |
 | May 2026 | Frontend flow tests added for app shell, merge, split, convert, compress, and sign |
 | May 2026 | Backend router tests added with mocked PDF operations |
+| Jun 2026 | Deployment flow documented for GitHub, Render, and Vercel |

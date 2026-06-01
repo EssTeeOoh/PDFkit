@@ -61,6 +61,22 @@ Backend hosts can also override nonstandard tool locations with:
 - `PDFKIT_TESSERACT_PATH`
 - `PDFKIT_POPPLER_PATH`
 
+## Deployment Flow
+
+The usual production split is:
+
+- **GitHub** holds the source of truth.
+- **Render** runs the FastAPI backend.
+- **Vercel** serves the React frontend.
+
+How the pieces connect:
+
+- The frontend reads `REACT_APP_API_BASE_URL` from build-time environment variables in [frontend/src/config/api.js](frontend/src/config/api.js).
+- The backend reads `PDFKIT_CORS_ORIGINS` and other settings from environment variables in [backend/app/config.py](backend/app/config.py).
+- The installed PWA updates in place because the frontend build stamps a fresh service worker cache version automatically before each build.
+
+That means you deploy a new GitHub commit, Render and Vercel publish their new builds, and users keep the same installed app shortcut while the shell updates behind it.
+
 ## Testing
 
 Frontend:
@@ -83,6 +99,7 @@ python -m unittest tests.test_api_routes
 - OCR-based PDF to Word depends on Tesseract and Poppler.
 - The Sign tool uses local PDF.js assets instead of a CDN.
 - Development mode does not keep a service worker registered, which avoids stale cached frontend builds on `localhost`.
+- Production builds automatically bump the service worker cache version, so the web app can update without forcing a reinstall.
 
 ## More Detail
 

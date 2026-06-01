@@ -1,4 +1,4 @@
-const CACHE_VERSION = "pdfkit-shell-mpum18pf";
+const CACHE_VERSION = "__PDFKIT_CACHE_VERSION__";
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
