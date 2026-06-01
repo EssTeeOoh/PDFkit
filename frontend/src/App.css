@@ -1011,6 +1011,7 @@ body {
   display: flex;
   gap: 10px;
   align-items: flex-start;
+  flex-wrap: wrap;
 }
 
 .status-item {
@@ -1041,6 +1042,26 @@ body {
 
 .status-item.tone-warn .status-item-value {
   color: var(--danger);
+}
+
+.status-item-action {
+  min-width: 122px;
+  width: auto;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  border-color: rgba(148, 163, 184, 0.14);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), rgba(255, 255, 255, 0));
+  box-shadow: none;
+}
+
+.status-item-action:hover {
+  border-color: rgba(148, 163, 184, 0.22);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.status-item-action:active {
+  transform: translateY(1px);
 }
 
 .mobile-theme-toggle {
@@ -1211,15 +1232,25 @@ body {
     z-index: 20;
     width: auto;
     min-width: 0;
-    flex-direction: row;
-    gap: 0;
-    padding: 8px;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 10px 8px;
+    border-radius: 20px;
+    box-shadow: 0 12px 28px rgba(2, 6, 23, 0.14);
   }
 
   .sidebar-brand,
-  .nav-label,
-  .sidebar-footer {
+  .nav-label {
     display: none;
+  }
+
+  .sidebar-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
   }
 
   .sidebar-nav {
@@ -1232,13 +1263,14 @@ body {
     flex: 1;
     flex-direction: column;
     justify-content: center;
-    gap: 6px;
-    padding: 10px 6px;
+    gap: 5px;
+    padding: 10px 4px;
+    border-radius: 14px;
   }
 
   .nav-badge-mark {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
     font-size: 10px;
   }
 
@@ -1247,11 +1279,26 @@ body {
   }
 
   .nav-title {
-    font-size: 10px;
+    font-size: 9px;
   }
 
   .nav-desc {
     display: none;
+  }
+
+  .sidebar-footer .theme-toggle,
+  .sidebar-footer .footer-note {
+    display: none;
+  }
+
+  .sidebar-links {
+    width: 100%;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .sidebar-links a {
+    font-size: 8px;
   }
 
   .main {

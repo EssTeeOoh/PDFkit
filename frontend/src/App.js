@@ -68,6 +68,7 @@ export default function App() {
   const [showIntro, setShowIntro] = useState(() => localStorage.getItem("pdfkit-intro-dismissed") !== "1");
   const [rememberIntro, setRememberIntro] = useState(true);
   const [activeTool, setActiveTool] = useState(() => localStorage.getItem("pdfkit-last-tool") || "merge");
+  const [canInstallApp, setCanInstallApp] = useState(false);
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem("pdfkit-theme");
     if (saved) return saved;
@@ -84,11 +85,33 @@ export default function App() {
   const mainRef = useRef(null);
   const pullStartY = useRef(null);
   const pullArmed = useRef(false);
+  const installPromptRef = useRef(null);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("pdfkit-theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (event) => {
+      event.preventDefault();
+      installPromptRef.current = event;
+      setCanInstallApp(true);
+    };
+
+    const handleAppInstalled = () => {
+      installPromptRef.current = null;
+      setCanInstallApp(false);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", handleAppInstalled);
+    };
+  }, []);
 
   useEffect(() => {
     if (!showIntro) {
@@ -212,8 +235,18 @@ export default function App() {
 
   const toggleTheme = () => setTheme((current) => (current === "dark" ? "light" : "dark"));
   const showShellOfflineState = healthReady && offline && !hasHealthyBackend;
+  const handleInstallApp = useCallback(async () => {
+    const promptEvent = installPromptRef.current;
+    if (!promptEvent) return;
+
+    promptEvent.prompt();
+    await promptEvent.userChoice.catch(() => null);
+    installPromptRef.current = null;
+    setCanInstallApp(false);
+  }, []);
   const backendLabel = offline ? "Unavailable" : healthReady ? "Available" : "Checking";
   const themeLabel = theme === "dark" ? "Dark" : "Light";
+  const appLabel = canInstallApp ? "Install ready" : "Web";
 
   if (showIntro) {
     return (
@@ -435,7 +468,14 @@ export default function App() {
             <div className="topbar-status">
               <StatusItem label="Backend" value={backendLabel} tone={offline ? "warn" : "good"} />
               <StatusItem label="Theme" value={themeLabel} />
-              <StatusItem label="App" value="Installed" tone="neutral" />
+              {canInstallApp ? (
+                <button type="button" className="status-item status-item-action tone-neutral" onClick={handleInstallApp}>
+                  <span className="status-item-label">App</span>
+                  <strong className="status-item-value">{appLabel}</strong>
+                </button>
+              ) : (
+                <StatusItem label="App" value={appLabel} tone="default" />
+              )}
             </div>
 
             <div className="mobile-theme-toggle">

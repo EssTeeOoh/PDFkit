@@ -99,12 +99,13 @@
       <ul>
         <li>Basic app telemetry such as frontend error events and tool usage signals.</li>
         <li>Backend request logs and health checks used to keep the service stable.</li>
-        <li>Files you choose to upload or process through the app.</li>
+        <li>Files you choose to upload or process through the app, which are received temporarily to complete the requested action.</li>
       </ul>
 
       <h2>How we use it</h2>
       <ul>
         <li>To run the requested PDF action and return the result.</li>
+        <li>Queued compression jobs keep the upload and generated output in a temporary job folder until the file is downloaded or the job is cleaned up.</li>
         <li>To diagnose failures and improve the app experience.</li>
         <li>To keep the service secure and reliable.</li>
       </ul>
