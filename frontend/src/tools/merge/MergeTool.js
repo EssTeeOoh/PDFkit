@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { post } from "../../utils/http";
 import "./MergeTool.css";
+import "../../styles/toolButtons.css";
 import { useToast } from "../../components/Toast";
 import { checkFileSizes } from "../../hooks/useFileSizeLimit";
 import { hapticTap, hapticSuccess, hapticError } from "../../utils/haptics";
@@ -281,7 +282,7 @@ export default function MergeTool() {
 
       <div className="action-row">
         {files.length > 0 && (
-          <button className="btn-ghost" onClick={() => {
+          <button className="btn-ghost tool-nav-btn" onClick={() => {
             setFiles([]);
             setSuccess(false);
             setError("");

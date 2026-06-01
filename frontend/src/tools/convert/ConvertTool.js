@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { post } from "../../utils/http";
 import "./ConvertTool.css";
+import "../../styles/toolButtons.css";
 import { useToast } from "../../components/Toast";
 import { checkFileSize } from "../../hooks/useFileSizeLimit";
 import { hapticTap, hapticSuccess, hapticError } from "../../utils/haptics";
@@ -212,7 +213,7 @@ export default function ConvertTool({ libOk = true }) {
 
       <div className="action-row">
         {file && (
-          <button className="btn-ghost" onClick={() => {
+          <button className="btn-ghost tool-nav-btn" onClick={() => {
             setFile(null);
             setSuccess(false);
             setError("");

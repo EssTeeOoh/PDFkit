@@ -248,15 +248,15 @@
   background: rgba(9, 13, 26, 0.74);
   backdrop-filter: blur(8px);
   display: flex;
-  align-items: stretch;
-  justify-content: stretch;
-  padding: 10px;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
   box-sizing: border-box;
 }
 
-.icanvas-focus-shell {
-  width: 100%;
-  height: 100%;
+.icanvas-focus-card {
+  width: min(96vw, 1200px);
+  height: min(94dvh, 1200px);
   background: var(--bg1);
   border: 1px solid var(--border);
   border-radius: 18px;
@@ -267,20 +267,10 @@
   min-width: 0;
 }
 
-.icanvas-focus-shell .icanvas-wrap {
+.icanvas-focus-card .icanvas-wrap {
   flex: 1 1 auto;
   min-height: 0;
   border-radius: 0;
-}
-
-.icanvas-focus-controls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
 }
 
 .focus-hint {
@@ -288,6 +278,8 @@
   font-size: 10px;
   color: var(--text3);
   letter-spacing: 0.04em;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
 }
 
 .icanvas-zoom-shell {
@@ -708,20 +700,37 @@
 
 /* Bigger tap targets on toolbar buttons for mobile */
 @media (max-width: 640px) {
+  .step-header .btn-ghost.small {
+    width: auto;
+    flex: 0 0 auto;
+    min-width: 72px;
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+
+  .btn-ghost.small {
+    padding: 6px 10px;
+    font-size: 11px;
+    min-width: 84px;
+  }
+
   .toolbar-btn {
-    padding: 10px 14px;
-    font-size: 13px;
+    padding: 8px 10px;
+    font-size: 11px;
+    line-height: 1.1;
   }
 
   .canvas-toolbar {
     flex-direction: column;
     align-items: flex-start;
+    gap: 8px;
   }
 
   .canvas-toolbar-left {
     width: 100%;
     min-width: 0;
     flex-wrap: wrap;
+    gap: 6px;
   }
 
   .canvas-toolbar-right {
@@ -773,14 +782,12 @@
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    gap: 4px;
+    padding: 5px;
   }
 
   .toolbar-text-tools-panel::-webkit-scrollbar {
     display: none;
-  }
-
-  .toolbar-zoom {
-    width: 100%;
   }
 
   .text-color-popover {

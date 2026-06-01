@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { post } from "../../utils/http";
 import "./SplitTool.css";
+import "../../styles/toolButtons.css";
 import { useToast } from "../../components/Toast";
 import { checkFileSize } from "../../hooks/useFileSizeLimit";
 import { hapticTap, hapticSuccess, hapticError } from "../../utils/haptics";
@@ -201,7 +202,7 @@ export default function SplitTool() {
 
       <div className="action-row">
         {file && (
-          <button className="btn-ghost" onClick={() => {
+          <button className="btn-ghost tool-nav-btn" onClick={() => {
             setFile(null);
             setSuccess(false);
             setError("");

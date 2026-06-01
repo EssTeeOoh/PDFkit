@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { post } from "../../utils/http";
 import "./SignTool.css";
+import "../../styles/toolButtons.css";
 import { useToast } from "../../components/Toast";
 import { checkFileSize } from "../../hooks/useFileSizeLimit";
 import { hapticTap, hapticSuccess, hapticError } from "../../utils/haptics";
@@ -308,7 +309,7 @@ function PdfPageRenderer({ file, pageNumber, width }) {
 
 
 /* ─── InteractiveCanvas ─────────────────────────────────────────────────────── */
-function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageHeight, zoom, onZoomChange, onSelectionChange, onWidthChange }) {
+function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageHeight, zoom, onZoomChange, allowZoom = false, onSelectionChange, onWidthChange }) {
   const [PREVIEW_W, setPREVIEW_W] = useState(794);
   const PREVIEW_H = Math.round(PREVIEW_W * (pageHeight / pageWidth));
 
@@ -452,7 +453,7 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
     const el = containerRef.current;
     if (!el) return;
     const ts = (e) => {
-      if (e.touches?.length === 2) {
+      if (allowZoom && e.touches?.length === 2) {
         const [a, b] = e.touches;
         pinchRef.current = {
           startDistance: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY),
@@ -478,7 +479,7 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
       pointerDown(e);
     };
     const tm = (e) => {
-      if (e.touches?.length === 2 && pinchRef.current) {
+      if (allowZoom && e.touches?.length === 2 && pinchRef.current) {
         const [a, b] = e.touches;
         const distance = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
         const nextZoom = clampZoom(pinchRef.current.startZoom * (distance / pinchRef.current.startDistance));
@@ -805,7 +806,6 @@ function StepSign({ file, analysis, onBack }) {
   const [photoImage,    setPhotoImage]    = useState(null);
   const [sigPickerOpen, setSigPickerOpen] = useState(false);
   const [canvasZoom,    setCanvasZoom]    = useState(1);
-  const [canvasFocus,   setCanvasFocus]   = useState(false);
   const [globalFontSize, setGlobalFontSize] = useState(12);
   const [selectedItemId, setSelectedItemId] = useState(null);
   const photoInputRef = useRef(null);
@@ -871,10 +871,6 @@ function StepSign({ file, analysis, onBack }) {
   const [textToolsOpen, setTextToolsOpen] = useState(false);
   const [textColorOpen, setTextColorOpen] = useState(false);
   const textColorWrapRef = useRef(null);
-
-  useEffect(() => {
-    setCanvasZoom(1);
-  }, []);
 
   const applyTextPatch = (patch) => {
     setTextStyleDefaults(prev => ({ ...prev, ...patch }));
@@ -1084,7 +1080,7 @@ function StepSign({ file, analysis, onBack }) {
   return (
     <div className="sign-step">
       <div className="step-header">
-        <button className="btn-ghost small" onClick={onBack}>← Back</button>
+        <button className="btn-ghost small tool-nav-btn" onClick={onBack}>← Back</button>
         <div className="step-label" style={{ margin: 0 }}>
           Step 2 — Fill &amp; Sign
           <span className="page-badge">{page_count} page{page_count !== 1 ? "s" : ""}</span>
@@ -1261,18 +1257,6 @@ function StepSign({ file, analysis, onBack }) {
             <div className="toolbar-divider" />
             <button className="toolbar-btn" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)">↩ Undo</button>
             <button className="toolbar-btn" onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)">↪ Redo</button>
-            <div className="toolbar-divider" />
-            <div className="toolbar-zoom">
-              <span className="toolbar-font-label">Zoom</span>
-              <button className="toolbar-btn small" onClick={() => setCanvasZoom(z => Math.max(1, Math.round((z - 0.1) * 100) / 100))}>−</button>
-              <button className="toolbar-btn small" onClick={() => setCanvasZoom(1)}>100%</button>
-              <button className="toolbar-btn small" onClick={() => setCanvasZoom(z => Math.min(2.5, Math.round((z + 0.1) * 100) / 100))}>＋</button>
-            </div>
-            {!canvasFocus && (
-              <button className="toolbar-btn" onClick={() => setCanvasFocus(true)}>
-                Focus View
-              </button>
-            )}
           </div>
           {page_count > 1 && (
             <div className="canvas-toolbar-right">
@@ -1298,52 +1282,21 @@ function StepSign({ file, analysis, onBack }) {
             <button className="draft-btn dismiss" onClick={dismissDraft}>Discard</button>
           </div>
         )}
-        {!canvasFocus && (
-          <div className="icanvas-wrap">
-            <InteractiveCanvas
-              file={file}
-              pageNumber={activePage}
-              items={currentItems}
-              setItems={setCurrentItems}
-              pageWidth={pageDim.width}
-              pageHeight={pageDim.height}
-              zoom={canvasZoom}
-              onZoomChange={setCanvasZoom}
-              onSelectionChange={setSelectedItemId}
-              onWidthChange={setPREVIEW_W_outer}
-            />
-          </div>
-        )}
-
-        {canvasFocus && (
-          <div className="icanvas-focus-overlay" onClick={() => setCanvasFocus(false)}>
-            <div className="icanvas-focus-shell" onClick={e => e.stopPropagation()}>
-              <div className="icanvas-focus-controls">
-                <div className="toolbar-zoom">
-                  <span className="toolbar-font-label">Zoom</span>
-                  <button className="toolbar-btn small" onClick={() => setCanvasZoom(z => Math.max(1, Math.round((z - 0.1) * 100) / 100))}>−</button>
-                  <button className="toolbar-btn small" onClick={() => setCanvasZoom(1)}>100%</button>
-                  <button className="toolbar-btn small" onClick={() => setCanvasZoom(z => Math.min(2.5, Math.round((z + 0.1) * 100) / 100))}>＋</button>
-                </div>
-                <span className="focus-hint">Tap outside to close</span>
-              </div>
-              <div className="icanvas-wrap focus-mode">
-                <InteractiveCanvas
-                  file={file}
-                  pageNumber={activePage}
-                  items={currentItems}
-                  setItems={setCurrentItems}
-                  pageWidth={pageDim.width}
-                  pageHeight={pageDim.height}
-                  zoom={canvasZoom}
-                  onZoomChange={setCanvasZoom}
-                  onSelectionChange={setSelectedItemId}
-                  onWidthChange={setPREVIEW_W_outer}
-                />
-              </div>
-            </div>
-          </div>
-        )}
+        <div className="icanvas-wrap">
+          <InteractiveCanvas
+            file={file}
+            pageNumber={activePage}
+            items={currentItems}
+            setItems={setCurrentItems}
+            pageWidth={pageDim.width}
+            pageHeight={pageDim.height}
+            zoom={canvasZoom}
+            onZoomChange={setCanvasZoom}
+            allowZoom={true}
+            onSelectionChange={setSelectedItemId}
+            onWidthChange={setPREVIEW_W_outer}
+          />
+        </div>
 
         {/* placed items summary */}
 

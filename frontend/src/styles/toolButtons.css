@@ -1,0 +1,33 @@
+.tool-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: auto !important;
+  min-width: 88px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--text2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  transition: all 0.15s;
+}
+
+.tool-nav-btn:hover {
+  border-color: var(--border2);
+  background: var(--bg3);
+  color: var(--text1);
+}
+
+@media (max-width: 640px) {
+  .tool-nav-btn {
+    min-width: 74px;
+    padding: 6px 9px;
+    font-size: 10px;
+  }
+}
