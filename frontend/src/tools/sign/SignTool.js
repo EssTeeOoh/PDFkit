@@ -1282,7 +1282,14 @@ function StepSign({ file, analysis, onBack }) {
             <button className="draft-btn dismiss" onClick={dismissDraft}>Discard</button>
           </div>
         )}
-        <div className="icanvas-wrap">
+        <div
+          className={`icanvas-wrap ${canvasZoom > 1 ? "zoomed" : ""}`}
+          style={{
+            width: `${Math.round(PREVIEW_W * canvasZoom)}px`,
+            height: `${Math.round(PREVIEW_W * (pageDim.height / pageDim.width) * canvasZoom)}px`,
+            maxWidth: "none",
+          }}
+        >
           <InteractiveCanvas
             file={file}
             pageNumber={activePage}

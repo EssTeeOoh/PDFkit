@@ -241,6 +241,10 @@
   -webkit-overflow-scrolling: touch;
 }
 
+.icanvas-wrap.zoomed {
+  overflow: visible;
+}
+
 .icanvas-focus-overlay {
   position: fixed;
   inset: 0;
