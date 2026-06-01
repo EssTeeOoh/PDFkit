@@ -301,13 +301,13 @@ function PdfPageRenderer({ file, pageNumber, width }) {
 
 
 /* ─── InteractiveCanvas ─────────────────────────────────────────────────────── */
-function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageHeight, onSelectionChange, onWidthChange }) {
+function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageHeight, zoom, onZoomChange, onSelectionChange, onWidthChange }) {
   const [PREVIEW_W, setPREVIEW_W] = useState(794);
   const PREVIEW_H = Math.round(PREVIEW_W * (pageHeight / pageWidth));
 
   // Fill the container width exactly
   useEffect(() => {
-    const parent = containerRef.current?.parentElement;
+    const parent = containerRef.current?.parentElement?.parentElement;
     if (!parent) return;
     const ro = new ResizeObserver(entries => {
       const w = Math.floor(entries[0].contentRect.width);
@@ -324,6 +324,8 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
   const activeOp      = useRef(null);
   const selectedIdRef = useRef(null);
   const lastTap       = useRef(0);
+  const pinchRef      = useRef(null);
+  const zoomRef       = useRef(zoom);
 
   // All mutable state in refs so native touch listeners always see latest values
   const stateRef = useRef({});
@@ -339,12 +341,18 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
 
   // Update ref every render so touch handlers always call fresh logic
   stateRef.current = { items, setItems, editingId, editState, setEditingId, setEditState, setSelectedId, PREVIEW_W, PREVIEW_H };
+  useEffect(() => { zoomRef.current = zoom; }, [zoom]);
+  const clampZoom = (value) => Math.min(2.5, Math.max(1, Number(value.toFixed(2))));
 
   // ── Helpers (read from stateRef so they're always fresh) ──────────────────
   const getRelPos = (e) => {
     const rect = containerRef.current.getBoundingClientRect();
     const src  = e.touches ? e.touches[0] : (e.changedTouches ? e.changedTouches[0] : e);
-    return { x: src.clientX - rect.left, y: src.clientY - rect.top };
+    const currentZoom = zoomRef.current || 1;
+    return {
+      x: (src.clientX - rect.left) / currentZoom,
+      y: (src.clientY - rect.top) / currentZoom,
+    };
   };
 
   const hitTest = (pos) => {
@@ -398,8 +406,9 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
     const { itemId, mode, startMouse, startItem } = activeOp.current;
     const { PREVIEW_W: pw, PREVIEW_H: ph } = stateRef.current;
     const src = e.touches ? e.touches[0] : e;
-    const dx = src.clientX - startMouse.x;
-    const dy = src.clientY - startMouse.y;
+    const currentZoom = zoomRef.current || 1;
+    const dx = (src.clientX - startMouse.x) / currentZoom;
+    const dy = (src.clientY - startMouse.y) / currentZoom;
     const MIN = 8;
     stateRef.current.setItems(prev => prev.map(item => {
       if (item.id !== itemId) return item;
@@ -436,6 +445,16 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
     const el = containerRef.current;
     if (!el) return;
     const ts = (e) => {
+      if (e.touches?.length === 2) {
+        const [a, b] = e.touches;
+        pinchRef.current = {
+          startDistance: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY),
+          startZoom: zoomRef.current || 1,
+        };
+        activeOp.current = null;
+        e.preventDefault();
+        return;
+      }
       const pos = getRelPos(e);
       const hit = hitTest(pos);
       if (hit) {
@@ -452,10 +471,23 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
       pointerDown(e);
     };
     const tm = (e) => {
+      if (e.touches?.length === 2 && pinchRef.current) {
+        const [a, b] = e.touches;
+        const distance = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+        const nextZoom = clampZoom(pinchRef.current.startZoom * (distance / pinchRef.current.startDistance));
+        if (nextZoom !== zoomRef.current && onZoomChange) {
+          onZoomChange(nextZoom);
+        }
+        e.preventDefault();
+        return;
+      }
       if (activeOp.current) e.preventDefault();
       pointerMove(e);
     };
-    const te = () => pointerUp();
+    const te = () => {
+      pinchRef.current = null;
+      pointerUp();
+    };
     el.addEventListener("touchstart", ts, { passive: false });
     el.addEventListener("touchmove",  tm, { passive: false });
     el.addEventListener("touchend",   te, { passive: true });
@@ -477,19 +509,20 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
 
 
   return (
-    <div
-      ref={containerRef}
-      className="icanvas"
-      style={{ width: PREVIEW_W, height: PREVIEW_H }}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseUp}
-      onDoubleClick={onDoubleClick}
-    >
-      <PdfPageRenderer file={file} pageNumber={pageNumber} width={PREVIEW_W} />
+    <div className="icanvas-zoom-shell" style={{ width: PREVIEW_W * zoom, height: PREVIEW_H * zoom }}>
+      <div
+        ref={containerRef}
+        className="icanvas"
+        style={{ width: PREVIEW_W, height: PREVIEW_H, transform: `scale(${zoom})`, transformOrigin: "top left" }}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+        onDoubleClick={onDoubleClick}
+      >
+        <PdfPageRenderer file={file} pageNumber={pageNumber} width={PREVIEW_W} />
 
-      {items.map(item => {
+        {items.map(item => {
         const isSel     = selectedId === item.id;
         const isEditing = editingId  === item.id;
         const textStyle  = getTextStyle(item);
@@ -576,7 +609,8 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
             })}
           </div>
         );
-      })}
+        })}
+      </div>
     </div>
   );
 }
@@ -756,6 +790,7 @@ function StepSign({ file, analysis, onBack }) {
   const [sigImage,      setSigImage]      = useState(null);
   const [photoImage,    setPhotoImage]    = useState(null);
   const [sigPickerOpen, setSigPickerOpen] = useState(false);
+  const [canvasZoom,    setCanvasZoom]    = useState(1);
   const [globalFontSize, setGlobalFontSize] = useState(12);
   const [selectedItemId, setSelectedItemId] = useState(null);
   const photoInputRef = useRef(null);
@@ -821,6 +856,10 @@ function StepSign({ file, analysis, onBack }) {
   const [textToolsOpen, setTextToolsOpen] = useState(true);
   const [textColorOpen, setTextColorOpen] = useState(false);
   const textColorWrapRef = useRef(null);
+
+  useEffect(() => {
+    setCanvasZoom(1);
+  }, []);
 
   const applyTextPatch = (patch) => {
     setTextStyleDefaults(prev => ({ ...prev, ...patch }));
@@ -1207,6 +1246,13 @@ function StepSign({ file, analysis, onBack }) {
             <div className="toolbar-divider" />
             <button className="toolbar-btn" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)">↩ Undo</button>
             <button className="toolbar-btn" onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)">↪ Redo</button>
+            <div className="toolbar-divider" />
+            <div className="toolbar-zoom">
+              <span className="toolbar-font-label">Zoom</span>
+              <button className="toolbar-btn small" onClick={() => setCanvasZoom(z => Math.max(1, Math.round((z - 0.1) * 100) / 100))}>−</button>
+              <button className="toolbar-btn small" onClick={() => setCanvasZoom(1)}>100%</button>
+              <button className="toolbar-btn small" onClick={() => setCanvasZoom(z => Math.min(2.5, Math.round((z + 0.1) * 100) / 100))}>＋</button>
+            </div>
           </div>
           {page_count > 1 && (
             <div className="canvas-toolbar-right">
@@ -1240,6 +1286,8 @@ function StepSign({ file, analysis, onBack }) {
             setItems={setCurrentItems}
             pageWidth={pageDim.width}
             pageHeight={pageDim.height}
+            zoom={canvasZoom}
+            onZoomChange={setCanvasZoom}
             onSelectionChange={setSelectedItemId}
             onWidthChange={setPREVIEW_W_outer}
           />

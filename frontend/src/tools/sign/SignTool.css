@@ -3,6 +3,7 @@
   flex-direction: column;
   gap: 20px;
   width: 100%;
+  min-width: 0;
 }
 
 /* ── Step shell ─────────────────────────────────────────────────────────────── */
@@ -10,6 +11,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;
 }
 
 .step-label {
@@ -59,6 +61,7 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  min-width: 0;
 }
 
 .section-title {
@@ -132,6 +135,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 10px;
+  min-width: 0;
 }
 
 .canvas-toolbar-left,
@@ -140,6 +144,7 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .toolbar-btn {
@@ -231,6 +236,14 @@
   max-height: none;
   /* ensure it sits above sidebar/layout */
   isolation: isolate;
+  max-width: 100%;
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+.icanvas-zoom-shell {
+  position: relative;
+  flex: 0 0 auto;
 }
 
 .icanvas {
@@ -616,6 +629,13 @@
   background: var(--bg2);
 }
 
+.toolbar-zoom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 /* ── Checkbox item ──────────────────────────────────────────────────────────── */
 .icanvas-checkmark-item {
   width: 100%;
@@ -632,7 +652,7 @@
 
 /* ── Touch / mobile fixes ───────────────────────────────────────────────────── */
 .icanvas {
-  touch-action: pan-y;  /* allow vertical scroll; JS blocks it only while dragging */
+  touch-action: pan-x pan-y;  /* allow panning in either direction; item drag still wins on hits */
   -webkit-user-select: none;
   user-select: none;
 }
@@ -650,7 +670,18 @@
   }
 
   .canvas-toolbar-left {
+    width: 100%;
+    min-width: 0;
     flex-wrap: wrap;
+  }
+
+  .canvas-toolbar-right {
+    width: 100%;
+    min-width: 0;
+    flex: 0 1 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
   }
 
   .icanvas-delete {
@@ -666,7 +697,40 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  .page-picker {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .page-picker::-webkit-scrollbar {
+    display: none;
+  }
+
+  .page-btn {
+    flex: 0 0 auto;
+  }
+
   .toolbar-text-tools-panel {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .toolbar-text-tools-panel::-webkit-scrollbar {
+    display: none;
+  }
+
+  .toolbar-zoom {
     width: 100%;
   }
 
@@ -770,12 +834,41 @@
 
   /* Canvas toolbar wraps nicely */
   .canvas-toolbar { gap: 8px; }
-  .canvas-toolbar-left { gap: 6px; flex-wrap: wrap; }
+  .canvas-toolbar-left {
+    gap: 6px;
+    flex-wrap: wrap;
+    width: 100%;
+    min-width: 0;
+  }
+  .canvas-toolbar-right {
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
   .toolbar-btn { padding: 7px 10px; font-size: 11px; }
   .toolbar-font-input { width: 44px; }
 
   /* Page picker scrollable */
-  .page-picker { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .page-picker {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .page-picker::-webkit-scrollbar {
+    display: none;
+  }
+
+  .toolbar-zoom {
+    width: 100%;
+  }
 
   /* Canvas hint smaller */
   .canvas-hint { font-size: 10px; }
