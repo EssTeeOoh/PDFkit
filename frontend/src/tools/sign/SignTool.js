@@ -276,9 +276,16 @@ function PdfPageRenderer({ file, pageNumber, width }) {
         const scaled   = page.getViewport({ scale });
         const canvas   = canvasRef.current;
         if (!canvas) return;
-        canvas.width  = scaled.width;
-        canvas.height = scaled.height;
-        await page.render({ canvasContext: canvas.getContext("2d"), viewport: scaled }).promise;
+        const outputScale = window.devicePixelRatio || 1;
+        canvas.width  = Math.floor(scaled.width * outputScale);
+        canvas.height = Math.floor(scaled.height * outputScale);
+        canvas.style.width = `${scaled.width}px`;
+        canvas.style.height = `${scaled.height}px`;
+        await page.render({
+          canvasContext: canvas.getContext("2d"),
+          viewport: scaled,
+          transform: outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null,
+        }).promise;
         if (!cancelled) setLoading(false);
       } catch (err) {
         console.error("PDF render error:", err);
@@ -505,22 +512,24 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
   const onMouseMove   = (e) => pointerMove(e);
   const onMouseUp     = ()  => pointerUp();
   const onDoubleClick = (e) => openEditor(getRelPos(e));
+  const scaledPreviewW = Math.round(PREVIEW_W * zoom);
+  const scaledPreviewH = Math.round(PREVIEW_H * zoom);
 
 
 
   return (
-    <div className="icanvas-zoom-shell" style={{ width: PREVIEW_W * zoom, height: PREVIEW_H * zoom }}>
+    <div className="icanvas-zoom-shell" style={{ width: scaledPreviewW, height: scaledPreviewH }}>
       <div
         ref={containerRef}
         className="icanvas"
-        style={{ width: PREVIEW_W, height: PREVIEW_H, transform: `scale(${zoom})`, transformOrigin: "top left" }}
+        style={{ width: scaledPreviewW, height: scaledPreviewH }}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
         onMouseLeave={onMouseUp}
         onDoubleClick={onDoubleClick}
       >
-        <PdfPageRenderer file={file} pageNumber={pageNumber} width={PREVIEW_W} />
+        <PdfPageRenderer file={file} pageNumber={pageNumber} width={scaledPreviewW} />
 
         {items.map(item => {
         const isSel     = selectedId === item.id;
@@ -530,7 +539,12 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
         return (
           <div key={item.id}
             className={`icanvas-item ${isSel ? "selected" : ""}`}
-            style={{ left: item.x, top: item.y, width: item.width, height: item.height }}>
+            style={{
+              left: item.x * zoom,
+              top: item.y * zoom,
+              width: item.width * zoom,
+              height: item.height * zoom,
+            }}>
 
             {/* image items */}
             {(item.type === "signature" || item.type === "photo") && (
@@ -545,7 +559,7 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
             {/* checkmark — scales with box size */}
             {item.type === "checkbox" && (
               <div className="icanvas-checkmark-item"
-                style={{ fontSize: Math.min(item.width, item.height) * 0.8 }}>
+                style={{ fontSize: Math.min(item.width, item.height) * 0.8 * zoom }}>
                 ✓
               </div>
             )}
@@ -555,7 +569,7 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
               <div
                 className="icanvas-text-preview"
                 style={{
-                  fontSize: textStyle.font_size,
+                  fontSize: textStyle.font_size * zoom,
                   fontWeight: textStyle.font_weight,
                   fontStyle: textStyle.font_style,
                   color: textStyle.color,
@@ -577,7 +591,7 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
                   autoFocus
                   value={editState.content}
                   style={{
-                    fontSize: textStyle.font_size,
+                    fontSize: textStyle.font_size * zoom,
                     fontWeight: textStyle.font_weight,
                     fontStyle: textStyle.font_style,
                     color: textStyle.color,
@@ -593,20 +607,20 @@ function InteractiveCanvas({ file, pageNumber, items, setItems, pageWidth, pageH
 
 
             {/* resize handles — corners only for checkbox, all for others */}
-            {isSel && (item.type === "checkbox" ? ["nw","ne","se","sw"] : HANDLES).map(h => {
-              const off = getHandleOffset(item, h);
-              const hs  = item.type === "checkbox" ? 8 : HANDLE_SIZE;
-              return (
-                <div key={h} className="icanvas-handle"
-                  style={{
-                    left: off.x - hs / 2,
-                    top:  off.y - hs / 2,
-                    width: hs,
-                    height: hs,
+              {isSel && (item.type === "checkbox" ? ["nw","ne","se","sw"] : HANDLES).map(h => {
+                const off = getHandleOffset(item, h);
+                const hs  = item.type === "checkbox" ? 8 : HANDLE_SIZE;
+                return (
+                  <div key={h} className="icanvas-handle"
+                    style={{
+                    left: (off.x - hs / 2) * zoom,
+                    top:  (off.y - hs / 2) * zoom,
+                    width: hs * zoom,
+                    height: hs * zoom,
                     cursor: cursorForHandle(h),
                   }} />
-              );
-            })}
+                );
+              })}
           </div>
         );
         })}
@@ -791,6 +805,7 @@ function StepSign({ file, analysis, onBack }) {
   const [photoImage,    setPhotoImage]    = useState(null);
   const [sigPickerOpen, setSigPickerOpen] = useState(false);
   const [canvasZoom,    setCanvasZoom]    = useState(1);
+  const [canvasFocus,   setCanvasFocus]   = useState(false);
   const [globalFontSize, setGlobalFontSize] = useState(12);
   const [selectedItemId, setSelectedItemId] = useState(null);
   const photoInputRef = useRef(null);
@@ -853,7 +868,7 @@ function StepSign({ file, analysis, onBack }) {
     font_style: "normal",
     color: "#1a1a2e",
   });
-  const [textToolsOpen, setTextToolsOpen] = useState(true);
+  const [textToolsOpen, setTextToolsOpen] = useState(false);
   const [textColorOpen, setTextColorOpen] = useState(false);
   const textColorWrapRef = useRef(null);
 
@@ -1253,6 +1268,11 @@ function StepSign({ file, analysis, onBack }) {
               <button className="toolbar-btn small" onClick={() => setCanvasZoom(1)}>100%</button>
               <button className="toolbar-btn small" onClick={() => setCanvasZoom(z => Math.min(2.5, Math.round((z + 0.1) * 100) / 100))}>＋</button>
             </div>
+            {!canvasFocus && (
+              <button className="toolbar-btn" onClick={() => setCanvasFocus(true)}>
+                Focus View
+              </button>
+            )}
           </div>
           {page_count > 1 && (
             <div className="canvas-toolbar-right">
@@ -1278,20 +1298,52 @@ function StepSign({ file, analysis, onBack }) {
             <button className="draft-btn dismiss" onClick={dismissDraft}>Discard</button>
           </div>
         )}
-        <div className="icanvas-wrap">
-          <InteractiveCanvas
-            file={file}
-            pageNumber={activePage}
-            items={currentItems}
-            setItems={setCurrentItems}
-            pageWidth={pageDim.width}
-            pageHeight={pageDim.height}
-            zoom={canvasZoom}
-            onZoomChange={setCanvasZoom}
-            onSelectionChange={setSelectedItemId}
-            onWidthChange={setPREVIEW_W_outer}
-          />
-        </div>
+        {!canvasFocus && (
+          <div className="icanvas-wrap">
+            <InteractiveCanvas
+              file={file}
+              pageNumber={activePage}
+              items={currentItems}
+              setItems={setCurrentItems}
+              pageWidth={pageDim.width}
+              pageHeight={pageDim.height}
+              zoom={canvasZoom}
+              onZoomChange={setCanvasZoom}
+              onSelectionChange={setSelectedItemId}
+              onWidthChange={setPREVIEW_W_outer}
+            />
+          </div>
+        )}
+
+        {canvasFocus && (
+          <div className="icanvas-focus-overlay" onClick={() => setCanvasFocus(false)}>
+            <div className="icanvas-focus-shell" onClick={e => e.stopPropagation()}>
+              <div className="icanvas-focus-controls">
+                <div className="toolbar-zoom">
+                  <span className="toolbar-font-label">Zoom</span>
+                  <button className="toolbar-btn small" onClick={() => setCanvasZoom(z => Math.max(1, Math.round((z - 0.1) * 100) / 100))}>−</button>
+                  <button className="toolbar-btn small" onClick={() => setCanvasZoom(1)}>100%</button>
+                  <button className="toolbar-btn small" onClick={() => setCanvasZoom(z => Math.min(2.5, Math.round((z + 0.1) * 100) / 100))}>＋</button>
+                </div>
+                <span className="focus-hint">Tap outside to close</span>
+              </div>
+              <div className="icanvas-wrap focus-mode">
+                <InteractiveCanvas
+                  file={file}
+                  pageNumber={activePage}
+                  items={currentItems}
+                  setItems={setCurrentItems}
+                  pageWidth={pageDim.width}
+                  pageHeight={pageDim.height}
+                  zoom={canvasZoom}
+                  onZoomChange={setCanvasZoom}
+                  onSelectionChange={setSelectedItemId}
+                  onWidthChange={setPREVIEW_W_outer}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* placed items summary */}
 

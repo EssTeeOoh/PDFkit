@@ -241,6 +241,55 @@
   -webkit-overflow-scrolling: touch;
 }
 
+.icanvas-focus-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(9, 13, 26, 0.74);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.icanvas-focus-shell {
+  width: 100%;
+  height: 100%;
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.icanvas-focus-shell .icanvas-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  border-radius: 0;
+}
+
+.icanvas-focus-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.focus-hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 0.04em;
+}
+
 .icanvas-zoom-shell {
   position: relative;
   flex: 0 0 auto;
