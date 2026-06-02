@@ -13,6 +13,7 @@ backend/.venv/
 backend/.env
 backend/.env.local
 backend/app/logs/
+backend/app/temp_*/
 backend/app/**/__pycache__/
 backend/app/**/*.pyc
 backend/ocr_debug_output/

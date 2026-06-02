@@ -61,6 +61,8 @@ Copy [`.env.example`](.env.example) to `.env` and adjust as needed.
   Requests allowed per IP in the configured window.
 - `PDFKIT_RATE_LIMIT_WINDOW_SECONDS`
   Rate-limit window length in seconds.
+- `PDFKIT_ADMIN_TOKEN`
+  Secret token required to access the private telemetry dashboard and summary endpoint.
 - `PDFKIT_LIBREOFFICE_PATH`
   Absolute path to `soffice` / LibreOffice binary.
 - `PDFKIT_TESSERACT_PATH`
@@ -74,7 +76,31 @@ Copy [`.env.example`](.env.example) to `.env` and adjust as needed.
 
 - `GET /health` reports dependency availability, active CORS origins, and rate-limit settings.
 - Backend logs are written to `backend/app/logs/` during local runs.
-- Anonymous local telemetry summary is available at `GET /api/telemetry/summary`.
+- Anonymous telemetry events are posted to `POST /api/telemetry/events` by the frontend.
+- The private telemetry summary is available at `GET /api/telemetry/summary` or `GET /api/admin/telemetry/summary` when you send `X-Admin-Token: <your secret>`.
+- Open the private dashboard in the browser by visiting `/#admin` on the frontend and pasting the same admin token.
+- The analytics endpoints are intentionally protected so the dashboard is not public.
+
+## Telemetry And Analytics
+
+PDFKit records anonymous usage events such as tool opens, successful actions, and frontend errors. The frontend sends these events to `POST /api/telemetry/events`.
+
+The analytics summary is private. To view it, set `PDFKIT_ADMIN_TOKEN` on the backend and open `/#admin` in the frontend. The dashboard fetches the private summary using the `X-Admin-Token` header.
+
+Telemetry data is anonymous and is used to measure tool usage, errors, and recent activity. It does not expose the analytics dashboard to normal users.
+
+## Viewing Analytics
+
+- Local dashboard: `http://localhost:3000/#admin`
+- Production dashboard: `https://your-frontend-domain/#admin`
+
+Enter the same `PDFKIT_ADMIN_TOKEN` that is set on the backend. Without that token, the analytics summary is not accessible.
+
+## Long-Running Jobs On Mobile
+
+Compression uses a background job plus polling so progress can survive brief interruptions better than before. On supported browsers, PDFKit also tries to keep the screen awake during compression.
+
+If the browser fully suspends the tab, closes the page, or the backend restarts, the job may still be interrupted. Keeping the tab open gives the best results on mobile.
 
 ## Testing
 

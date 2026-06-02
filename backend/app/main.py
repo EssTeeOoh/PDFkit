@@ -15,7 +15,7 @@ from app.config import (
     get_cors_origins,
 )
 from app.logger import configure_logging, get_logger
-from app.routers import compress, convert, merge, sign, split, telemetry
+from app.routers import admin_telemetry, compress, convert, merge, sign, split, telemetry
 from app.services.rate_limit import InMemoryRateLimiter
 
 configure_logging()
@@ -45,6 +45,7 @@ app.include_router(convert.router, prefix="/api")
 app.include_router(sign.router, prefix="/api")
 app.include_router(compress.router, prefix="/api")
 app.include_router(telemetry.router, prefix="/api")
+app.include_router(admin_telemetry.router, prefix="/api")
 
 
 @app.middleware("http")

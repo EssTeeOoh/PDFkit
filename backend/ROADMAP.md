@@ -163,3 +163,4 @@ This means:
 | May 2026 | Frontend flow tests added for app shell, merge, split, convert, compress, and sign |
 | May 2026 | Backend router tests added with mocked PDF operations |
 | Jun 2026 | Deployment flow documented for GitHub, Render, and Vercel |
+| Jun 2026 | Private admin telemetry dashboard added with token-protected analytics access |

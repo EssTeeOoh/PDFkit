@@ -2,6 +2,7 @@
 .env
 .env.local
 app/logs/
+app/temp_*/
 app/**/__pycache__/
 app/**/*.pyc
 ocr_debug_output/

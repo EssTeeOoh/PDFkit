@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ToastProvider } from "./components/Toast";
 import ErrorBoundary from "./components/ErrorBoundary";
+import AdminTelemetryDashboard from "./components/AdminTelemetryDashboard";
 import MergeTool from "./tools/merge/MergeTool";
 import SplitTool from "./tools/split/SplitTool";
 import ConvertTool from "./tools/convert/ConvertTool";
@@ -68,6 +69,7 @@ export default function App() {
   const [showIntro, setShowIntro] = useState(() => localStorage.getItem("pdfkit-intro-dismissed") !== "1");
   const [rememberIntro, setRememberIntro] = useState(true);
   const [activeTool, setActiveTool] = useState(() => localStorage.getItem("pdfkit-last-tool") || "merge");
+  const [adminMode, setAdminMode] = useState(() => window.location.hash === "#admin");
   const [canInstallApp, setCanInstallApp] = useState(false);
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem("pdfkit-theme");
@@ -114,14 +116,20 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!showIntro) {
+    if (!showIntro && !adminMode) {
       trackToolView(activeTool);
     }
-  }, [activeTool, showIntro]);
+  }, [activeTool, showIntro, adminMode]);
 
   const handleSetTool = useCallback((id) => {
     setActiveTool(id);
     localStorage.setItem("pdfkit-last-tool", id);
+  }, []);
+
+  useEffect(() => {
+    const onHashChange = () => setAdminMode(window.location.hash === "#admin");
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
   const enterWorkspace = useCallback(() => {
@@ -247,6 +255,19 @@ export default function App() {
   const backendLabel = offline ? "Unavailable" : healthReady ? "Available" : "Checking";
   const themeLabel = theme === "dark" ? "Dark" : "Light";
   const appLabel = canInstallApp ? "Install ready" : "Web";
+
+  if (adminMode) {
+    return (
+      <ToastProvider>
+        <AdminTelemetryDashboard
+          onBack={() => {
+            window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+            setAdminMode(false);
+          }}
+        />
+      </ToastProvider>
+    );
+  }
 
   if (showIntro) {
     return (

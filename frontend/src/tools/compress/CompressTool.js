@@ -10,6 +10,8 @@ import { getFriendlyApiError } from "../../utils/apiErrors";
 
 const API = apiUrl();
 const POLL_MS = 900;
+const COMPRESS_JOB_KEY = "pdfkit-compress-job";
+const COMPRESS_COMPLETE_KEY = "pdfkit-compress-complete";
 
 const LEVELS = [
   { id: "low", label: "Low", desc: "Light compression. Full clarity preserved. Best for print or archiving." },
@@ -89,6 +91,8 @@ export default function CompressTool() {
   const resultRef = useRef(null);
   const mountedRef = useRef(true);
   const resultUrlRef = useRef(null);
+  const wakeLockRef = useRef(null);
+  const pollingRef = useRef(false);
   const { error: toastError } = useToast();
 
   const level = LEVELS[levelIdx];
@@ -100,12 +104,65 @@ export default function CompressTool() {
     }
   }, []);
 
+  const clearPendingJob = useCallback(() => {
+    try {
+      localStorage.removeItem(COMPRESS_JOB_KEY);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const savePendingJob = useCallback((payload) => {
+    try {
+      localStorage.setItem(COMPRESS_JOB_KEY, JSON.stringify(payload));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const clearCompletedJob = useCallback(() => {
+    try {
+      localStorage.removeItem(COMPRESS_COMPLETE_KEY);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const saveCompletedJob = useCallback((payload) => {
+    try {
+      localStorage.setItem(COMPRESS_COMPLETE_KEY, JSON.stringify(payload));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const releaseWakeLock = useCallback(async () => {
+    if (!wakeLockRef.current) return;
+    try {
+      await wakeLockRef.current.release();
+    } catch {
+      // ignore
+    } finally {
+      wakeLockRef.current = null;
+    }
+  }, []);
+
+  const requestWakeLock = useCallback(async () => {
+    if (!("wakeLock" in navigator) || document.visibilityState !== "visible") return;
+    try {
+      wakeLockRef.current = await navigator.wakeLock.request("screen");
+    } catch {
+      wakeLockRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     return () => {
       mountedRef.current = false;
       clearResultUrl();
+      releaseWakeLock();
     };
-  }, [clearResultUrl]);
+  }, [clearResultUrl, releaseWakeLock]);
 
   useEffect(() => {
     if (!result || loading || !resultRef.current) return;
@@ -139,8 +196,11 @@ export default function CompressTool() {
     setError("");
     setProgress({ percent: 0, stage: "" });
     setJobId(null);
+    clearPendingJob();
+    clearCompletedJob();
+    void releaseWakeLock();
     hapticTap();
-  }, [replaceResult]);
+  }, [clearCompletedJob, clearPendingJob, releaseWakeLock, replaceResult]);
 
   const onDrop = useCallback((event) => {
     event.preventDefault();
@@ -176,7 +236,7 @@ export default function CompressTool() {
     setProgress({ percent: 100, stage: "Ready to download" });
   };
 
-  const downloadJobResult = async (nextJobId, fallbackName) => {
+  const downloadJobResult = useCallback(async (nextJobId, fallbackName, levelId = null) => {
     const response = await get(`${API}/api/compress/jobs/${nextJobId}/download`, {
       responseType: "blob",
     });
@@ -187,28 +247,157 @@ export default function CompressTool() {
     const filename = filenameFromDisposition(disposition, fallbackName);
 
     replaceResult({ url, size: blob.size, filename });
-  };
+    saveCompletedJob({
+      jobId: nextJobId,
+      fallbackName,
+      levelId,
+      completedAt: Date.now(),
+    });
+  }, [replaceResult, saveCompletedJob]);
 
-  const pollJobUntilDone = async (nextJobId, fallbackName) => {
+  const pollJobUntilDone = useCallback(async (nextJobId, fallbackName) => {
+    if (pollingRef.current) return;
+    pollingRef.current = true;
     while (mountedRef.current) {
-      const response = await get(`${API}/api/compress/jobs/${nextJobId}`);
-      const data = response.data;
-      const nextPercent = typeof data.progress === "number" ? data.progress : 20;
-      const nextStage = data.stage || "Compressing PDF";
-      setProgress({ percent: Math.max(20, nextPercent), stage: nextStage });
+      try {
+        const response = await get(`${API}/api/compress/jobs/${nextJobId}`);
+        const data = response.data;
+        const nextPercent = typeof data.progress === "number" ? data.progress : 20;
+        const nextStage = data.stage || "Compressing PDF";
+        setProgress({ percent: Math.max(20, nextPercent), stage: nextStage });
 
-      if (data.status === "done") {
-        await downloadJobResult(nextJobId, fallbackName);
-        return;
-      }
+        if (data.status === "done") {
+          await downloadJobResult(nextJobId, fallbackName, level.id);
+          clearPendingJob();
+          saveCompletedJob({
+            jobId: nextJobId,
+            fallbackName,
+            levelId: level.id,
+            completedAt: Date.now(),
+          });
+          return;
+        }
 
-      if (data.status === "error") {
-        throw new Error(data.error || "Compression failed. Please try again.");
+        if (data.status === "error") {
+          clearPendingJob();
+          throw new Error(data.error || "Compression failed. Please try again.");
+        }
+      } catch (error) {
+        if (error?.response?.status === 404) {
+          clearPendingJob();
+          throw new Error("That compression job is no longer available. Please try again.");
+        }
+        throw error;
       }
 
       await wait(POLL_MS);
     }
-  };
+  }, [clearPendingJob, downloadJobResult, saveCompletedJob, level.id]);
+
+  const resumePendingJob = useCallback(async () => {
+    let pending = null;
+    try {
+      pending = JSON.parse(localStorage.getItem(COMPRESS_JOB_KEY) || "null");
+    } catch {
+      clearPendingJob();
+      return;
+    }
+
+    if (!pending?.jobId) {
+      let completed = null;
+      try {
+        completed = JSON.parse(localStorage.getItem(COMPRESS_COMPLETE_KEY) || "null");
+      } catch {
+        clearCompletedJob();
+        return;
+      }
+
+      if (!completed?.jobId || result) return;
+
+      setLoading(true);
+      setError("");
+      setJobId(completed.jobId);
+      setProgress({ percent: 100, stage: "Ready to download" });
+
+      try {
+        await downloadJobResult(completed.jobId, completed.fallbackName || "compressed.pdf", completed.levelId || null);
+        trackToolAction("compress", "compress_complete", "success", { level: completed.levelId || "unknown", mode: "restored" });
+        hapticSuccess();
+      } catch (err) {
+        const compMsg = await getFriendlyApiError(err, "We couldn't restore that finished download. Please try again.", {
+          networkMessage: "We couldn't connect right now. Please try again in a moment.",
+        });
+        setError(compMsg);
+        setProgress({ percent: 0, stage: "" });
+        hapticError();
+        trackToolAction("compress", "compress_complete", "error", { level: completed.levelId || "unknown", mode: "restored" });
+        reportFrontendError("compress_restore_failed", err, { tool: "compress", mode: "restored" });
+        toastError(compMsg);
+        clearCompletedJob();
+        setJobId(null);
+      } finally {
+        setLoading(false);
+      }
+
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setJobId(pending.jobId);
+    setProgress({ percent: 20, stage: "Resuming compression" });
+
+    try {
+      await pollJobUntilDone(pending.jobId, pending.fallbackName || "compressed.pdf");
+      setProgress({ percent: 100, stage: "Ready to download" });
+      trackToolAction("compress", "compress_complete", "success", { level: pending.levelId || "unknown", mode: "resumed" });
+      hapticSuccess();
+    } catch (err) {
+      const compMsg = await getFriendlyApiError(err, "We couldn't resume that compression job. Please try again.", {
+        networkMessage: "We couldn't connect right now. Please try again in a moment.",
+      });
+      setError(compMsg);
+      setProgress({ percent: 0, stage: "" });
+      hapticError();
+      trackToolAction("compress", "compress_complete", "error", { level: pending.levelId || "unknown", mode: "resumed" });
+      reportFrontendError("compress_resume_failed", err, { tool: "compress", mode: "resumed" });
+      toastError(compMsg);
+      clearPendingJob();
+      clearCompletedJob();
+      setJobId(null);
+    } finally {
+      setLoading(false);
+      pollingRef.current = false;
+    }
+  }, [clearCompletedJob, clearPendingJob, downloadJobResult, pollJobUntilDone, result, toastError]);
+
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible" && jobId && !loading) {
+        void resumePendingJob();
+      }
+    };
+
+    const onPageShow = () => {
+      if (jobId && !loading) {
+        void resumePendingJob();
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("pageshow", onPageShow);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("pageshow", onPageShow);
+    };
+  }, [jobId, loading, resumePendingJob]);
+
+  useEffect(() => {
+    if (jobId || result || loading) return;
+    void resumePendingJob();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const compress = async () => {
     if (!file) {
@@ -221,6 +410,7 @@ export default function CompressTool() {
     replaceResult(null);
     setJobId(null);
     setProgress({ percent: 4, stage: "Uploading PDF" });
+    await requestWakeLock();
     let createdJobId = null;
 
     try {
@@ -243,6 +433,12 @@ export default function CompressTool() {
       const nextJobId = createResponse.data.job_id;
       createdJobId = nextJobId;
       setJobId(nextJobId);
+      savePendingJob({
+        jobId: nextJobId,
+        fallbackName,
+        levelId: level.id,
+        createdAt: Date.now(),
+      });
       setProgress({ percent: 20, stage: "Starting compression" });
       await pollJobUntilDone(nextJobId, fallbackName);
       setProgress({ percent: 100, stage: "Ready to download" });
@@ -263,6 +459,7 @@ export default function CompressTool() {
           legacyFormData.append("level", level.id);
           const fallbackName = file.name.replace(/\.pdf$/i, "_compressed.pdf");
           await compressLegacy(legacyFormData, fallbackName);
+          clearPendingJob();
           trackToolAction("compress", "compress_complete", "success", { level: level.id, mode: "legacy" });
           hapticSuccess();
           return;
@@ -295,9 +492,12 @@ export default function CompressTool() {
       trackToolAction("compress", "compress_complete", "error", { level: level.id });
       reportFrontendError("compress_failed", err, { tool: "compress", level: level.id });
       toastError(compMsg);
+      clearPendingJob();
     } finally {
       setLoading(false);
       setJobId(null);
+      pollingRef.current = false;
+      void releaseWakeLock();
     }
   };
 
@@ -332,7 +532,7 @@ export default function CompressTool() {
     setProgress({ percent: 0, stage: "" });
   };
 
-  const reset = () => {
+  const reset = useCallback(() => {
     setFile(null);
     setOriginalFile(null);
     replaceResult(null);
@@ -341,8 +541,11 @@ export default function CompressTool() {
     setRecompressing(false);
     setProgress({ percent: 0, stage: "" });
     setJobId(null);
+    clearPendingJob();
+    clearCompletedJob();
+    void releaseWakeLock();
     if (inputRef.current) inputRef.current.value = "";
-  };
+  }, [clearCompletedJob, clearPendingJob, releaseWakeLock, replaceResult]);
 
   return (
     <div className="compress-tool">

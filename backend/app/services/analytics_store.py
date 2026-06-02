@@ -19,11 +19,13 @@ def _default_summary() -> dict:
         "totals": {
             "events": 0,
             "errors": 0,
+            "unique_clients": 0,
         },
         "by_category": {},
         "by_name": {},
         "by_tool": {},
         "tool_actions": {},
+        "clients": {},
         "recent": [],
     }
 
@@ -52,6 +54,7 @@ def record_event(
     status: str | None = None,
     source: str = "frontend",
     message: str | None = None,
+    client_id: str | None = None,
 ) -> dict:
     with _lock:
         summary = _load_summary()
@@ -68,6 +71,20 @@ def record_event(
             action_key = f"{tool}:{name}:{status or 'unknown'}"
             summary["tool_actions"][action_key] = summary["tool_actions"].get(action_key, 0) + 1
 
+        if client_id:
+            clients = summary.setdefault("clients", {})
+            client_stats = clients.get(client_id, {})
+            if not client_stats:
+                client_stats = {
+                    "first_seen": summary["updated_at"],
+                    "last_seen": summary["updated_at"],
+                    "events": 0,
+                }
+            client_stats["last_seen"] = summary["updated_at"]
+            client_stats["events"] = int(client_stats.get("events", 0)) + 1
+            clients[client_id] = client_stats
+            summary["totals"]["unique_clients"] = len(clients)
+
         recent_event = {
             "at": summary["updated_at"],
             "category": category,
@@ -76,12 +93,23 @@ def record_event(
             "status": status,
             "source": source,
             "message": message,
+            "client_id": client_id,
         }
         summary["recent"] = [recent_event, *summary.get("recent", [])][:25]
         _save_summary(summary)
         return summary
 
 
-def get_summary() -> dict:
+def get_summary(*, include_clients: bool = False) -> dict:
     with _lock:
-        return _load_summary()
+        summary = _load_summary()
+        if include_clients:
+            return summary
+
+        public_summary = dict(summary)
+        public_summary.pop("clients", None)
+        public_summary["recent"] = [
+            {k: v for k, v in event.items() if k != "client_id"}
+            for event in summary.get("recent", [])
+        ]
+        return public_summary

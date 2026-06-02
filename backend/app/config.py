@@ -94,3 +94,4 @@ def get_env_int(name: str, default: int) -> int:
 
 RATE_LIMIT_REQUESTS = get_env_int("PDFKIT_RATE_LIMIT_REQUESTS", 30)
 RATE_LIMIT_WINDOW_SECONDS = get_env_int("PDFKIT_RATE_LIMIT_WINDOW_SECONDS", 60)
+ADMIN_TOKEN = os.getenv("PDFKIT_ADMIN_TOKEN", "").strip() or None
