@@ -1,4 +1,4 @@
-const CACHE_VERSION = "pdfkit-shell-mpx4il0p";
+const CACHE_VERSION = "pdfkit-shell-mpx9nxpo";
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 

@@ -19,6 +19,7 @@ def _default_summary() -> dict:
         "totals": {
             "events": 0,
             "errors": 0,
+            "external_errors": 0,
             "unique_clients": 0,
         },
         "by_category": {},
@@ -62,6 +63,8 @@ def record_event(
         summary["totals"]["events"] += 1
         if category == "error":
             summary["totals"]["errors"] += 1
+        if category == "external":
+            summary["totals"]["external_errors"] += 1
 
         summary["by_category"][category] = summary["by_category"].get(category, 0) + 1
         summary["by_name"][name] = summary["by_name"].get(name, 0) + 1

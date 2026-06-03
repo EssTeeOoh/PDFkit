@@ -2,6 +2,14 @@ import { apiUrl } from "../config/api";
 
 const API = apiUrl("/api/telemetry/events");
 const CLIENT_KEY = "pdfkit-anon-client-id";
+const EXTERNAL_ERROR_PATTERNS = [
+  /metamask/i,
+  /wallet connect/i,
+  /failed to connect to (?:the )?supplied address/i,
+  /the message port closed before a response was received/i,
+  /a listener indicated an asynchronous response/i,
+  /could not establish connection/i,
+];
 
 function getClientId() {
   try {
@@ -47,6 +55,18 @@ function postTelemetry(payload) {
   }).catch(() => {});
 }
 
+function getErrorMessage(error, fallback = "Unknown frontend error") {
+  if (typeof error === "string") return error;
+  return error?.message || fallback;
+}
+
+function isExternalNoise(error, context = {}) {
+  const message = getErrorMessage(error, context?.message || "");
+  const stack = typeof error === "object" && error?.stack ? String(error.stack) : "";
+  const haystack = `${message}\n${stack}`;
+  return EXTERNAL_ERROR_PATTERNS.some((pattern) => pattern.test(haystack));
+}
+
 export function trackToolView(tool) {
   postTelemetry({ category: "usage", name: "tool_view", tool, status: "view" });
 }
@@ -56,13 +76,12 @@ export function trackToolAction(tool, name, status = "success", metadata = {}) {
 }
 
 export function reportFrontendError(name, error, context = {}) {
-  const message =
-    typeof error === "string"
-      ? error
-      : error?.message || context?.message || "Unknown frontend error";
+  const isExternal = context?.ignoreExternal !== false && isExternalNoise(error, context);
+
+  const message = getErrorMessage(error, context?.message || "Unknown frontend error");
 
   postTelemetry({
-    category: "error",
+    category: isExternal ? "external" : "error",
     name,
     tool: context.tool,
     status: "error",

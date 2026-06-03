@@ -12,7 +12,7 @@ router = APIRouter(tags=["telemetry"])
 
 
 class TelemetryEvent(BaseModel):
-    category: Literal["usage", "error"]
+    category: Literal["usage", "error", "external"]
     name: str
     tool: str | None = None
     status: str | None = None
@@ -37,9 +37,10 @@ def create_telemetry_event(event: TelemetryEvent):
         client_id=str(event.metadata.get("client_id", "")).strip() or None,
     )
 
-    if event.category == "error":
+    if event.category in {"error", "external"}:
         logger.error(
-            "frontend-error | source=%s tool=%s name=%s status=%s message=%s metadata=%s",
+            "frontend-%s | source=%s tool=%s name=%s status=%s message=%s metadata=%s",
+            event.category,
             event.source,
             clean_tool or "-",
             clean_name,

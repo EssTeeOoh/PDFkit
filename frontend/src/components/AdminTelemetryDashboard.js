@@ -175,13 +175,22 @@ export default function AdminTelemetryDashboard({ onBack }) {
               <strong>{summary?.totals?.errors ?? 0}</strong>
             </article>
             <article className="admin-card metric-card">
+              <span>External</span>
+              <strong>{summary?.totals?.external_errors ?? 0}</strong>
+            </article>
+            <article className="admin-card metric-card">
               <span>Unique clients</span>
               <strong>{summary?.totals?.unique_clients ?? 0}</strong>
             </article>
-            <article className="admin-card metric-card">
-              <span>Last update</span>
-              <strong>{formatTime(summary?.updated_at)}</strong>
-            </article>
+          </section>
+
+          <section className="admin-card">
+            <div className="admin-card-header">
+              <div>
+                <h2>Last update</h2>
+                <p>{formatTime(summary?.updated_at)}</p>
+              </div>
+            </div>
           </section>
 
           <section className="admin-two-col">
